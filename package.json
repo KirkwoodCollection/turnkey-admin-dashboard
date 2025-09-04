@@ -1,0 +1,13 @@
+{
+  "name": "turnkey-admin-dashboard",
+  "version": "0.1.0",
+  "description": "Real-time analytics dashboard for TurnkeyHMS",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "test": "jest"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
