@@ -1,0 +1,48 @@
+[
+  {
+    "sessionId": "sess_fixture_001",
+    "userId": "user_fixture_001",
+    "hotel": "Test Hotel Alpha",
+    "destination": "Test Destination A",
+    "status": "LIVE",
+    "createdAt": "2024-01-15T10:00:00Z",
+    "updatedAt": "2024-01-15T10:15:00Z",
+    "checkInDate": "2024-02-01",
+    "checkOutDate": "2024-02-03",
+    "guests": 2,
+    "rooms": 1,
+    "selectedRoomType": "Standard Room",
+    "totalPrice": 200.00,
+    "currentStage": 4,
+    "completedStages": ["destination", "hotel", "dates", "room"]
+  },
+  {
+    "sessionId": "sess_fixture_002",
+    "userId": "user_fixture_002",
+    "hotel": "Test Hotel Beta",
+    "destination": "Test Destination B",
+    "status": "ABANDONED",
+    "createdAt": "2024-01-15T09:00:00Z",
+    "updatedAt": "2024-01-15T09:20:00Z",
+    "currentStage": 2,
+    "completedStages": ["destination", "hotel"],
+    "abandonmentStage": "date_selection"
+  },
+  {
+    "sessionId": "sess_fixture_003",
+    "userId": "user_fixture_003",
+    "hotel": "Test Hotel Gamma",
+    "destination": "Test Destination C",
+    "status": "CONFIRMED_BOOKING",
+    "createdAt": "2024-01-15T08:00:00Z",
+    "updatedAt": "2024-01-15T08:30:00Z",
+    "checkInDate": "2024-01-20",
+    "checkOutDate": "2024-01-22",
+    "guests": 1,
+    "rooms": 1,
+    "selectedRoomType": "Premium Suite",
+    "totalPrice": 350.00,
+    "currentStage": 10,
+    "completedStages": ["destination", "hotel", "dates", "room", "guests", "addons", "review", "payment", "confirmation"]
+  }
+]

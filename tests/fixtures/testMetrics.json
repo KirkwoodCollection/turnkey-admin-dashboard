@@ -1,0 +1,108 @@
+{
+  "activeUsers": 123,
+  "totalSearches": 2456,
+  "totalBookings": 367,
+  "conversionRate": 14.95,
+  "abandonmentRate": 28.4,
+  "averageSessionDuration": 418,
+  "averageLeadTime": 15,
+  "topDestinations": [
+    {
+      "destination": "Test City Alpha",
+      "count": 234,
+      "percentage": 28.5
+    },
+    {
+      "destination": "Test City Beta",
+      "count": 189,
+      "percentage": 23.1
+    },
+    {
+      "destination": "Test City Gamma",
+      "count": 156,
+      "percentage": 19.0
+    }
+  ],
+  "topHotels": [
+    {
+      "hotel": "Test Grand Hotel",
+      "searches": 345,
+      "bookings": 52,
+      "conversionRate": 15.1
+    },
+    {
+      "hotel": "Test Boutique Inn",
+      "searches": 287,
+      "bookings": 41,
+      "conversionRate": 14.3
+    },
+    {
+      "hotel": "Test Resort & Spa",
+      "searches": 234,
+      "bookings": 33,
+      "conversionRate": 14.1
+    }
+  ],
+  "funnelStats": [
+    {
+      "stage": "Visitors",
+      "count": 1500,
+      "percentage": 100.0,
+      "dropOffRate": 0
+    },
+    {
+      "stage": "Destination Search",
+      "count": 1275,
+      "percentage": 85.0,
+      "dropOffRate": 15.0
+    },
+    {
+      "stage": "Hotel Selection",
+      "count": 1020,
+      "percentage": 68.0,
+      "dropOffRate": 20.0
+    },
+    {
+      "stage": "Date Selection",
+      "count": 816,
+      "percentage": 54.4,
+      "dropOffRate": 20.0
+    },
+    {
+      "stage": "Room Selection",
+      "count": 653,
+      "percentage": 43.5,
+      "dropOffRate": 20.0
+    },
+    {
+      "stage": "Guest Details",
+      "count": 522,
+      "percentage": 34.8,
+      "dropOffRate": 20.0
+    },
+    {
+      "stage": "Add-ons",
+      "count": 470,
+      "percentage": 31.3,
+      "dropOffRate": 10.0
+    },
+    {
+      "stage": "Review Booking",
+      "count": 422,
+      "percentage": 28.1,
+      "dropOffRate": 10.2
+    },
+    {
+      "stage": "Payment",
+      "count": 338,
+      "percentage": 22.5,
+      "dropOffRate": 19.9
+    },
+    {
+      "stage": "Confirmation",
+      "count": 305,
+      "percentage": 20.3,
+      "dropOffRate": 9.8
+    }
+  ]
+}

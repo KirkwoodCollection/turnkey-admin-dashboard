@@ -1,0 +1,70 @@
+---
+id: e23ba0e1-bbaa-48f3-8bda-687cb9f1f869
+---
+flowchart TB
+  %% =======================
+  %% Admin Dashboard (revised)
+  %% =======================
+
+  %% Internal Admin Dashboard Modules
+  subgraph AdminDashboardApp ["Admin Dashboard Web App (React, TypeScript)"]
+    direction TB
+
+    subgraph UI["UI Features"]
+      direction TB
+      UIAnalytics["Analytics Dashboard"]
+      UIRevenue["Revenue Management (read-only)"]
+      UIShared["Shared Components (tables, charts, filters)"]
+    end
+
+    subgraph ClientServices["Client Services Layer"]
+      direction TB
+      ApiClient["REST API Client\n(/api/v1/analytics/*, /health, /analytics/export)"]
+      WSClient["WebSocket Client\n(real-time updates)"]
+      TimeFilter["Time Filter Store\n(global: range, tz, granularity)"]
+      AuthClient["Auth Client (Firebase JS SDK)\n(obtain/refresh JWT)"]
+    end
+
+    %% wiring inside the app
+    UIAnalytics --> TimeFilter
+    UIRevenue --> TimeFilter
+    UIShared --> UIAnalytics
+    UIShared --> UIRevenue
+
+    UIAnalytics --> ApiClient
+    UIAnalytics --> WSClient
+    UIRevenue --> ApiClient
+    UIRevenue --> WSClient
+
+    %% Auth flow inside app
+    AdminUser["Hotel Admin User"] --> AuthClient
+  end
+
+  %% External endpoints & services
+  GatewayAPI[[API Gateway]]:::external
+  WebSocketSvc[[WebSocket Service]]:::external
+  AnalyticsSvc[[Analytics Service]]:::external
+  FirebaseAuth[[Firebase Auth]]:::external
+  PubSub[[Google Cloud Pub/Sub]]:::external
+  EventBusNote["(Events fan-out via Pub/Sub)"]:::note
+
+  %% How the Admin app talks outward
+  AuthClient -- sign-in / token --> FirebaseAuth
+  ApiClient -- "REST: /api/v1/analytics/*" --> GatewayAPI
+  ApiClient -- "REST: /health (Gateway/Services)" --> GatewayAPI
+  ApiClient -- "REST: /api/v1/analytics/export" --> GatewayAPI
+  WSClient -- "WebSocket: /ws" --> WebSocketSvc
+
+  %% Gateway routing (read-only from Admin)
+  GatewayAPI -- "/api/v1/analytics/*" --> AnalyticsSvc
+  %% (No direct Admin calls to Booking or Session in practice)
+
+  %% Real-time path
+  PubSub --- WebSocketSvc
+  WebSocketSvc -- "broadcasts updates" --> AdminDashboardApp
+  PubSub -. downstream events .- EventBusNote
+
+  %% Styling
+  classDef external fill:#f0f0f0,stroke:#777,stroke-dasharray:5 5,color:#000
+  classDef note fill:#fff7e6,stroke:#b07,stroke-dasharray:3 3,color:#000
+  class GatewayAPI,WebSocketSvc,AnalyticsSvc,FirebaseAuth,PubSub external

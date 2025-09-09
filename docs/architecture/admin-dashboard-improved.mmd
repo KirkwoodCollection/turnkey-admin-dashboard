@@ -1,0 +1,127 @@
+flowchart TB
+    %% TurnkeyHMS Admin Dashboard - Enhanced Architecture - Synced with MermaidChart
+    
+    subgraph ReactApp ["Admin Dashboard Web App"]
+      direction TB
+      
+      %% Provider Stack & State Management
+      subgraph StateLayer ["State Management & Providers"]
+        ReactQuery["React Query<br/>(Server State & Caching)"]:::cache
+        AuthProvider["Auth Provider"]:::provider
+        WebSocketProvider["WebSocket Provider"]:::provider
+        HealthProvider["Health Provider"]:::provider
+        TimeFilterProvider["Time Filter Provider"]:::provider
+      end
+      
+      %% Route Protection & Layout
+      subgraph NavigationLayer ["Navigation & Layout"]
+        AuthGuard["Auth Guard<br/>(Route Protection)"]:::guard
+        LayoutComponent["Layout Component<br/>(Header + Navigation)"]:::layout
+        ReactRouter["React Router<br/>(Page Routing)"]:::router
+      end
+      
+      %% Page Level
+      subgraph PageLevel ["Page Components"]
+        OverviewPage["Overview Page<br/>/overview"]:::page
+        SystemHealthPage["System Health Page<br/>/system-health"]:::page
+      end
+      
+      %% Feature Modules
+      subgraph FeatureModules ["Feature Modules"]
+        UIAnalytics["Analytics Dashboard"]:::module
+        UIRevenue["Revenue Management"]:::module
+        UIHealth["Health Monitoring"]:::module
+        UIRealtime["Real-time Components"]:::module
+        UIShared["Shared UI Components"]:::module
+      end
+      
+      %% Service Layer
+      subgraph ServiceIntegration ["Service Integration Layer"]
+        ApiClient["API Client<br/>(REST + Auth Headers)"]:::service
+        WebSocketClient["WebSocket Client<br/>(Real-time Events)"]:::service
+        CacheService["Cache Service<br/>(React Query + IndexedDB)"]:::service
+        AuthService["Auth Service<br/>(Mock → Firebase)"]:::service
+      end
+    end
+
+    %% Backend Services
+    subgraph Backend ["TurnkeyHMS Backend"]
+      GatewayAPI["API Gateway"]:::external
+      WebSocketSvc["WebSocket Service"]:::external
+      AnalyticsSvc["Analytics Service"]:::external
+      HealthSvc["Health Service"]:::external
+      EventBus["Events Service/Broker"]:::external
+      
+      %% Indirect Services
+      BookingAPISvc["Booking API Service"]:::indirect
+      SessionSvc["Session Service"]:::indirect
+    end
+
+    %% Future State
+    FirebaseAuth["Firebase Authentication<br/>(Planned Migration)"]:::future
+
+    %% User Entry Point
+    AdminUser["Hotel Admin User"] --> ReactRouter
+    
+    %% Navigation Flow
+    ReactRouter --> AuthGuard
+    AuthGuard --> LayoutComponent
+    LayoutComponent --> OverviewPage
+    LayoutComponent --> SystemHealthPage
+    
+    %% Page to Feature Connections
+    OverviewPage --> UIAnalytics
+    OverviewPage --> UIRevenue
+    SystemHealthPage --> UIHealth
+    
+    %% Feature Dependencies
+    UIAnalytics --> UIRealtime
+    UIAnalytics --> UIShared
+    UIRevenue --> UIShared
+    UIHealth --> UIShared
+    UIRealtime --> UIShared
+    
+    %% State Management Connections
+    StateLayer --> FeatureModules
+    ReactQuery --> CacheService
+    AuthProvider --> AuthService
+    WebSocketProvider --> WebSocketClient
+    
+    %% Service Integration
+    FeatureModules --> ServiceIntegration
+    ServiceIntegration --> GatewayAPI
+    ServiceIntegration --> WebSocketSvc
+    
+    %% Backend Service Connections
+    GatewayAPI --> AnalyticsSvc
+    GatewayAPI --> HealthSvc
+    WebSocketSvc --> EventBus
+    
+    %% Data Aggregation (Indirect)
+    AnalyticsSvc -.-> BookingAPISvc
+    AnalyticsSvc -.-> SessionSvc
+    
+    %% Future Migration Path
+    AuthService -.->|"Migration Path"| FirebaseAuth
+
+    %% Styling
+    classDef cache fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#000
+    classDef provider fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
+    classDef guard fill:#ffebee,stroke:#d32f2f,stroke-width:2px,color:#000
+    classDef layout fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:#000
+    classDef router fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    classDef page fill:#fff8e1,stroke:#ffa000,stroke-width:2px,color:#000
+    classDef module fill:#e8e8ff,stroke:#666,stroke-width:1px,color:#000
+    classDef service fill:#f1f8e9,stroke:#689f38,stroke-width:2px,color:#000
+    classDef external fill:#f0f0f0,stroke:#777,stroke-dasharray:5 5,color:#000
+    classDef indirect fill:#f9f9f9,stroke:#ccc,stroke-dasharray:2 2,color:#666
+    classDef future fill:#e1d5e7,stroke:#9673a6,stroke-dasharray:3 3,color:#000
+    
+    class GatewayAPI,WebSocketSvc,AnalyticsSvc,HealthSvc,EventBus external
+    class BookingAPISvc,SessionSvc indirect
+
+
+
+
+
+
