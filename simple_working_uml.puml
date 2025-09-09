@@ -1,0 +1,220 @@
+@startuml
+
+package "External Systems" {
+    class TurnkeyHMSAPI {
+        +baseURL: string
+        +getAnalytics(): Promise
+        +getRevenue(): Promise
+        +getSessions(): Promise
+    }
+    
+    class WebSocketGateway {
+        +url: string
+        +connect(): Promise
+        +disconnect(): void
+        +subscribe(event: string): void
+    }
+    
+    class FirebaseAuth {
+        +authenticate(): Promise
+        +refreshToken(): Promise
+        +logout(): Promise
+    }
+}
+
+package "React Contexts" {
+    class AuthContext {
+        +user: User
+        +isAuthenticated: boolean
+        +login(): Promise
+        +logout(): Promise
+        +hasPermission(): boolean
+    }
+    
+    class WebSocketContext {
+        +isConnected: boolean
+        +subscribe(): void
+        +unsubscribe(): void
+        +send(): void
+    }
+    
+    class FilterContext {
+        +timeRange: object
+        +dateRange: object
+        +setTimeRange(): void
+        +clearFilters(): void
+    }
+}
+
+package "Services" {
+    class APIService {
+        +get(): Promise
+        +post(): Promise
+        +put(): Promise
+        +delete(): Promise
+    }
+    
+    class WebSocketService {
+        +connect(): Promise
+        +disconnect(): void
+        +subscribe(): void
+        +send(): void
+    }
+    
+    class CacheService {
+        +get(): any
+        +set(): void
+        +invalidate(): void
+        +clear(): void
+    }
+    
+    class AuthService {
+        +login(): Promise
+        +logout(): Promise
+        +refreshToken(): Promise
+    }
+}
+
+package "Custom Hooks" {
+    class UseRealtimeData {
+        +data: array
+        +isConnected: boolean
+        +clearBuffer(): void
+    }
+    
+    class UseCacheFirst {
+        +data: any
+        +isLoading: boolean
+        +refetch(): void
+    }
+    
+    class UseWebSocket {
+        +isConnected: boolean
+        +subscribe(): void
+        +send(): void
+    }
+}
+
+package "AI Insights" {
+    class PredictiveModels {
+        +render(): ReactElement
+    }
+    
+    class AnomalyDetection {
+        +render(): ReactElement
+    }
+    
+    class UseMLPredictions {
+        +predictions: array
+        +refresh(): void
+    }
+}
+
+package "Revenue Management" {
+    class PricingOptimizer {
+        +render(): ReactElement
+    }
+    
+    class DemandForecast {
+        +render(): ReactElement
+    }
+    
+    class UsePricingEngine {
+        +recommendations: array
+        +optimize(): void
+    }
+}
+
+package "Session Analytics" {
+    class ConversionFunnel {
+        +render(): ReactElement
+    }
+    
+    class JourneyMap {
+        +render(): ReactElement
+    }
+    
+    class UseSessionData {
+        +sessions: array
+        +refresh(): void
+    }
+}
+
+package "Shared Components" {
+    class DataTable {
+        +data: array
+        +render(): ReactElement
+    }
+    
+    class LoadingStates {
+        +render(): ReactElement
+    }
+    
+    class ErrorBoundary {
+        +render(): ReactElement
+    }
+}
+
+package "Layout" {
+    class DashboardShell {
+        +render(): ReactElement
+    }
+    
+    class NavigationBar {
+        +render(): ReactElement
+    }
+    
+    class TimeFilterControls {
+        +render(): ReactElement
+    }
+}
+
+package "Types" {
+    class User {
+        +id: string
+        +email: string
+        +name: string
+    }
+    
+    class UserSession {
+        +id: string
+        +userId: string
+        +startTime: Date
+    }
+    
+    enum UserRole {
+        ADMIN
+        MANAGER
+        ANALYST
+    }
+    
+    enum EventType {
+        PAGE_VIEW
+        BOOKING_ATTEMPT
+        BOOKING_COMPLETE
+    }
+}
+
+AuthContext --> FirebaseAuth
+WebSocketContext --> WebSocketGateway
+FilterContext --> CacheService
+
+APIService --> TurnkeyHMSAPI
+WebSocketService --> WebSocketGateway
+AuthService --> FirebaseAuth
+
+UseRealtimeData --> WebSocketContext
+UseCacheFirst --> APIService
+UseWebSocket --> WebSocketContext
+
+PredictiveModels --> UseMLPredictions
+ConversionFunnel --> UseSessionData
+PricingOptimizer --> UsePricingEngine
+
+DashboardShell --> NavigationBar
+DashboardShell --> TimeFilterControls
+
+User --> UserRole
+
+@enduml
+

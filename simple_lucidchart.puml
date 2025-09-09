@@ -1,0 +1,185 @@
+@startuml
+
+class TurnkeyHMSAPI {
+  - baseURL: String
+  + getAnalytics(): Promise
+  + getRevenue(): Promise
+  + getSessions(): Promise
+}
+
+class WebSocketGateway {
+  - url: String
+  + connect(): Promise
+  + disconnect(): void
+  + subscribe(): void
+}
+
+class FirebaseAuth {
+  + authenticate(): Promise
+  + refreshToken(): Promise
+  + logout(): Promise
+}
+
+class AuthContext {
+  + user: User
+  + isAuthenticated: Boolean
+  + login(): Promise
+  + logout(): Promise
+  + hasPermission(): Boolean
+}
+
+class WebSocketContext {
+  + isConnected: Boolean
+  + subscribe(): void
+  + unsubscribe(): void
+  + send(): void
+}
+
+class FilterContext {
+  + timeRange: Object
+  + dateRange: Object
+  + setTimeRange(): void
+  + clearFilters(): void
+}
+
+class APIService {
+  + get(): Promise
+  + post(): Promise
+  + put(): Promise
+  + delete(): Promise
+}
+
+class WebSocketService {
+  + connect(): Promise
+  + disconnect(): void
+  + subscribe(): void
+  + send(): void
+}
+
+class CacheService {
+  + get(): Object
+  + set(): void
+  + invalidate(): void
+  + clear(): void
+}
+
+class AuthService {
+  + login(): Promise
+  + logout(): Promise
+  + refreshToken(): Promise
+}
+
+class UseRealtimeData {
+  + data: Object[]
+  + isConnected: Boolean
+  + clearBuffer(): void
+}
+
+class UseCacheFirst {
+  + data: Object
+  + isLoading: Boolean
+  + refetch(): void
+}
+
+class UseWebSocket {
+  + isConnected: Boolean
+  + subscribe(): void
+  + send(): void
+}
+
+class PredictiveModels {
+  + render(): ReactElement
+}
+
+class AnomalyDetection {
+  + render(): ReactElement
+}
+
+class UseMLPredictions {
+  + predictions: Object[]
+  + refresh(): void
+}
+
+class PricingOptimizer {
+  + render(): ReactElement
+}
+
+class DemandForecast {
+  + render(): ReactElement
+}
+
+class UsePricingEngine {
+  + recommendations: Object[]
+  + optimize(): void
+}
+
+class ConversionFunnel {
+  + render(): ReactElement
+}
+
+class JourneyMap {
+  + render(): ReactElement
+}
+
+class UseSessionData {
+  + sessions: Object[]
+  + refresh(): void
+}
+
+class DataTable {
+  + data: Object[]
+  + render(): ReactElement
+}
+
+class LoadingStates {
+  + render(): ReactElement
+}
+
+class ErrorBoundary {
+  + render(): ReactElement
+}
+
+class DashboardShell {
+  + render(): ReactElement
+}
+
+class NavigationBar {
+  + render(): ReactElement
+}
+
+class TimeFilterControls {
+  + render(): ReactElement
+}
+
+class User {
+  + id: String
+  + email: String
+  + name: String
+}
+
+class UserSession {
+  + id: String
+  + userId: String
+  + startTime: Date
+}
+
+AuthContext --> FirebaseAuth
+WebSocketContext --> WebSocketGateway
+FilterContext --> CacheService
+APIService --> TurnkeyHMSAPI
+WebSocketService --> WebSocketGateway
+AuthService --> FirebaseAuth
+UseRealtimeData --> WebSocketContext
+UseCacheFirst --> APIService
+UseWebSocket --> WebSocketContext
+PredictiveModels --> UseMLPredictions
+AnomalyDetection --> UseMLPredictions
+PricingOptimizer --> UsePricingEngine
+DemandForecast --> UsePricingEngine
+ConversionFunnel --> UseSessionData
+JourneyMap --> UseSessionData
+DashboardShell --> NavigationBar
+DashboardShell --> TimeFilterControls
+
+@enduml
+

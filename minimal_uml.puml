@@ -1,0 +1,19 @@
+@startuml
+
+class API
+class Gateway  
+class Auth
+class Context
+class Service
+class Hook
+class Component
+
+API --> Service
+Gateway --> Service
+Auth --> Context
+Context --> Hook
+Service --> Hook
+Hook --> Component
+
+@enduml
+

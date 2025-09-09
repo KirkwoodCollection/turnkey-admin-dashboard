@@ -1,0 +1,1133 @@
+/' 
+TurnkeyHMS Admin Dashboard - Complete UML Documentation
+This file contains all UML diagrams for the system architecture
+'/
+
+'====================================================================
+' 1. CLASS DIAGRAM - Core Architecture
+'====================================================================
+
+@startuml TurnkeyHMS_Class_Diagram
+
+!theme plain
+
+package "External Systems" {
+    class TurnkeyHMSAPI {
+        +baseURL: string
+        +version: string
+        +getAnalytics(): Promise
+        +getRevenue(): Promise
+        +getSessions(): Promise
+    }
+    
+    class WebSocketGateway {
+        +url: string
+        +connect(): Promise
+        +disconnect(): void
+        +subscribe(event: string): void
+        +emit(event: string, data: any): void
+    }
+    
+    class FirebaseAuth {
+        +authenticate(credentials): Promise
+        +refreshToken(): Promise
+        +logout(): Promise
+    }
+}
+
+package "React Contexts" {
+    class AuthContext {
+        +user: User
+        +isAuthenticated: boolean
+        +isLoading: boolean
+        +permissions: Permission[]
+        +role: UserRole
+        +login(email: string, password: string): Promise
+        +logout(): Promise
+        +hasPermission(permission): boolean
+        +canAccess(resource: string): boolean
+    }
+    
+    class WebSocketContext {
+        +isConnected: boolean
+        +connectionStatus: string
+        +subscribe(event: string, handler): void
+        +unsubscribe(event: string, handler): void
+        +send(message: any): void
+        +reconnect(): void
+    }
+    
+    class FilterContext {
+        +timeRange: TimeRange
+        +dateRange: DateRange
+        +selectedProperties: string[]
+        +searchQuery: string
+        +customFilters: object
+        +setTimeRange(range): void
+        +setDateRange(range): void
+        +toggleProperty(propertyId: string): void
+        +clearFilters(): void
+        +hasActiveFilters: boolean
+    }
+}
+
+package "Services Layer" {
+    abstract class BaseService {
+        #apiClient: object
+        #cache: object
+        +initialize(): void
+        +destroy(): void
+        #handleError(error): void
+    }
+    
+    class APIService extends BaseService {
+        +endpoints: object
+        +get(url: string): Promise
+        +post(url: string, data: any): Promise
+        +put(url: string, data: any): Promise
+        +delete(url: string): Promise
+    }
+    
+    class WebSocketService extends BaseService {
+        -connection: WebSocket
+        -eventEmitter: object
+        -messageQueue: array
+        -reconnectAttempts: number
+        +connect(): Promise
+        +disconnect(): void
+        +subscribe(event: string, handler): void
+        +unsubscribe(event: string, handler): void
+        +send(message: any): void
+    }
+    
+    class CacheService extends BaseService {
+        -cache: Map
+        +get(key: string): any
+        +set(key: string, value: any, ttl: number): void
+        +invalidate(key: string): void
+        +clear(): void
+    }
+    
+    class AuthService extends BaseService {
+        +currentUser: User
+        +isAuthenticated: boolean
+        +login(credentials): Promise
+        +logout(): Promise
+        +refreshToken(): Promise
+        +getPermissions(): array
+    }
+}
+
+package "Custom Hooks" {
+    class UseRealtimeData {
+        +eventType: string
+        +data: array
+        +latestData: any
+        +isConnected: boolean
+        +buffer: array
+        +clearBuffer(): void
+    }
+    
+    class UseCacheFirst {
+        +key: string
+        +data: any
+        +isLoading: boolean
+        +isError: boolean
+        +error: Error
+        +isStale: boolean
+        +refetch(): void
+    }
+    
+    class UseWebSocket {
+        +isConnected: boolean
+        +connectionStatus: string
+        +subscribe(event: string, handler): void
+        +unsubscribe(event: string, handler): void
+        +send(message: any): void
+    }
+}
+
+package "Feature Modules" {
+    package "AI Insights" {
+        class AIInsightsModule {
+            +components: array
+            +hooks: array
+            +services: array
+        }
+        
+        class PredictiveModels {
+            +props: object
+            +render(): ReactElement
+        }
+        
+        class UseMLPredictions {
+            +predictions: array
+            +isLoading: boolean
+            +confidence: number
+            +refresh(): void
+        }
+    }
+    
+    package "Revenue Management" {
+        class RevenueManagementModule {
+            +components: array
+            +hooks: array
+            +services: array
+        }
+        
+        class PricingOptimizer {
+            +props: object
+            +render(): ReactElement
+        }
+        
+        class UsePricingEngine {
+            +recommendations: array
+            +isOptimizing: boolean
+            +optimize(): void
+            +applyRecommendations(): void
+        }
+    }
+    
+    package "Session Analytics" {
+        class SessionAnalyticsModule {
+            +components: array
+            +hooks: array
+            +services: array
+        }
+        
+        class ConversionFunnel {
+            +props: object
+            +render(): ReactElement
+        }
+        
+        class UseSessionData {
+            +sessions: array
+            +activeSessions: array
+            +metrics: object
+            +refresh(): void
+        }
+    }
+}
+
+package "Shared Components" {
+    abstract class BaseComponent {
+        +props: object
+        +render(): ReactElement
+        #handleError(error): void
+        #validateProps(): boolean
+    }
+    
+    class DataTable extends BaseComponent {
+        +data: array
+        +columns: array
+        +sortable: boolean
+        +filterable: boolean
+        +onSort(column: string, direction: string): void
+        +onFilter(filters: object): void
+    }
+    
+    class LoadingStates extends BaseComponent {
+        +type: string
+        +message: string
+        +progress: number
+        +render(): ReactElement
+    }
+    
+    class ErrorBoundary extends BaseComponent {
+        +hasError: boolean
+        +error: Error
+        +componentDidCatch(error, errorInfo): void
+        +render(): ReactElement
+    }
+}
+
+package "Layout Components" {
+    class DashboardShell extends BaseComponent {
+        +children: ReactNode
+        +sidebar: boolean
+        +navigation: object
+        +render(): ReactElement
+    }
+    
+    class NavigationBar extends BaseComponent {
+        +user: User
+        +notifications: array
+        +onLogout(): void
+        +render(): ReactElement
+    }
+    
+    class TimeFilterControls extends BaseComponent {
+        +timeRange: object
+        +presets: array
+        +onChange(range): void
+        +render(): ReactElement
+    }
+}
+
+package "Types" {
+    class User {
+        +id: string
+        +email: string
+        +name: string
+        +role: UserRole
+        +permissions: array
+        +lastLogin: Date
+    }
+    
+    class UserSession {
+        +id: string
+        +userId: string
+        +startTime: Date
+        +endTime: Date
+        +events: array
+        +deviceInfo: object
+        +location: object
+    }
+    
+    class SessionEvent {
+        +id: string
+        +type: EventType
+        +timestamp: Date
+        +data: any
+        +sessionId: string
+    }
+    
+    enum UserRole {
+        ADMIN
+        MANAGER
+        ANALYST
+        VIEWER
+    }
+    
+    enum EventType {
+        PAGE_VIEW
+        BOOKING_ATTEMPT
+        BOOKING_COMPLETE
+        SESSION_START
+        SESSION_END
+    }
+}
+
+AuthContext --> FirebaseAuth
+WebSocketContext --> WebSocketGateway
+FilterContext --> CacheService
+
+APIService --> TurnkeyHMSAPI
+WebSocketService --> WebSocketGateway
+AuthService --> FirebaseAuth
+
+UseRealtimeData --> WebSocketContext
+UseCacheFirst --> APIService
+UseWebSocket --> WebSocketContext
+
+AIInsightsModule --> UseMLPredictions
+RevenueManagementModule --> UsePricingEngine
+SessionAnalyticsModule --> UseSessionData
+
+PredictiveModels --> UseMLPredictions
+ConversionFunnel --> UseSessionData
+DataTable --|> BaseComponent
+
+DashboardShell *-- NavigationBar
+DashboardShell *-- TimeFilterControls
+
+User --> UserRole
+UserSession *-- SessionEvent
+SessionEvent --> EventType
+
+@enduml
+
+'====================================================================
+' 2. COMPONENT DIAGRAM - Module Architecture
+'====================================================================
+
+@startuml TurnkeyHMS_Component_Diagram
+
+!theme plain
+
+package "TurnkeyHMS Admin Dashboard" {
+    
+    package "External Systems" {
+        component [TurnkeyHMS API] as API
+        component [WebSocket Gateway] as WSGateway
+        component [Firebase Auth] as FirebaseAuth
+        component [Event Stream] as EventStream
+    }
+    
+    package "Application Core" {
+        component [React App Shell] as AppShell
+        component [Vite Build System] as Vite
+        component [TypeScript Compiler] as TSC
+        
+        interface "Component Interface" as IComponent
+        interface "Service Interface" as IService
+        interface "Hook Interface" as IHook
+    }
+    
+    package "Context Providers" {
+        component [Auth Context] as AuthCtx
+        component [WebSocket Context] as WSCtx
+        component [Filter Context] as FilterCtx
+        
+        AuthCtx ..> IService
+        WSCtx ..> IService
+        FilterCtx ..> IService
+    }
+    
+    package "Service Layer" {
+        component [API Service] as APIService
+        component [WebSocket Service] as WSService
+        component [Cache Service] as CacheService
+        component [Auth Service] as AuthService
+        
+        APIService ..> IService
+        WSService ..> IService
+        CacheService ..> IService
+        AuthService ..> IService
+    }
+    
+    package "Custom Hooks" {
+        component [useRealtimeData] as useRealtime
+        component [useCacheFirst] as useCacheFirst
+        component [useWebSocket] as useWS
+        component [useSessionAnalytics] as useSession
+        component [useRevenueMetrics] as useRevenue
+        component [useMLPredictions] as useML
+        
+        useRealtime ..> IHook
+        useCacheFirst ..> IHook
+        useWS ..> IHook
+        useSession ..> IHook
+        useRevenue ..> IHook
+        useML ..> IHook
+    }
+    
+    package "Feature Modules" {
+        
+        package "AI Insights Module" {
+            component [Predictive Models] as PredictiveComp
+            component [Anomaly Detection] as AnomalyComp
+            component [Recommendation Engine] as RecommendationComp
+            component [Insights Dashboard] as InsightsDash
+            
+            PredictiveComp ..> IComponent
+            AnomalyComp ..> IComponent
+            RecommendationComp ..> IComponent
+            InsightsDash ..> IComponent
+        }
+        
+        package "Revenue Management Module" {
+            component [Pricing Optimizer] as PricingComp
+            component [Demand Forecast] as DemandComp
+            component [Competitor Analysis] as CompetitorComp
+            component [Revenue Performance] as RevenueComp
+            
+            PricingComp ..> IComponent
+            DemandComp ..> IComponent
+            CompetitorComp ..> IComponent
+            RevenueComp ..> IComponent
+        }
+        
+        package "Session Analytics Module" {
+            component [Session Overview] as SessionOverview
+            component [Journey Map] as JourneyMap
+            component [Conversion Funnel] as ConversionFunnel
+            component [Abandonment Analysis] as AbandonmentAnalysis
+            
+            SessionOverview ..> IComponent
+            JourneyMap ..> IComponent
+            ConversionFunnel ..> IComponent
+            AbandonmentAnalysis ..> IComponent
+        }
+    }
+    
+    package "Shared Components" {
+        component [Data Table] as DataTable
+        component [Loading States] as LoadingStates
+        component [Error Boundary] as ErrorBoundary
+        component [Chart Components] as ChartComponents
+        
+        DataTable ..> IComponent
+        LoadingStates ..> IComponent
+        ErrorBoundary ..> IComponent
+        ChartComponents ..> IComponent
+    }
+    
+    package "Layout Components" {
+        component [Dashboard Shell] as DashboardShell
+        component [Navigation Bar] as NavBar
+        component [Time Filter Controls] as TimeFilters
+        component [Sidebar] as Sidebar
+        
+        DashboardShell ..> IComponent
+        NavBar ..> IComponent
+        TimeFilters ..> IComponent
+        Sidebar ..> IComponent
+    }
+    
+    package "Real-time Components" {
+        component [Activity Feed] as ActivityFeed
+        component [Live Session Monitor] as LiveMonitor
+        component [Active Users Tracker] as ActiveUsers
+        
+        ActivityFeed ..> IComponent
+        LiveMonitor ..> IComponent
+        ActiveUsers ..> IComponent
+    }
+}
+
+API --> APIService
+WSGateway --> WSService
+FirebaseAuth --> AuthService
+EventStream --> WSService
+
+APIService --> CacheService
+WSService --> WSCtx
+AuthService --> AuthCtx
+CacheService --> useCacheFirst
+
+useRealtime --> WSCtx
+useCacheFirst --> APIService
+useWS --> WSCtx
+useSession --> APIService
+useRevenue --> APIService
+useML --> APIService
+
+PredictiveComp --> useML
+AnomalyComp --> useML
+RecommendationComp --> useML
+InsightsDash --> useML
+
+PricingComp --> useRevenue
+DemandComp --> useRevenue
+CompetitorComp --> APIService
+RevenueComp --> useRevenue
+
+SessionOverview --> useSession
+JourneyMap --> useSession
+ConversionFunnel --> useSession
+AbandonmentAnalysis --> useSession
+
+ActivityFeed --> useRealtime
+LiveMonitor --> useRealtime
+ActiveUsers --> useRealtime
+
+DashboardShell --> NavBar
+DashboardShell --> TimeFilters
+DashboardShell --> Sidebar
+NavBar --> AuthCtx
+TimeFilters --> FilterCtx
+
+ConversionFunnel --> DataTable
+SessionOverview --> ChartComponents
+ErrorBoundary --> LoadingStates
+
+@enduml
+
+'====================================================================
+' 3. SEQUENCE DIAGRAM - User Authentication Flow
+'====================================================================
+
+@startuml Authentication_Sequence
+
+!theme plain
+
+actor User
+participant "Login Component" as LoginComp
+participant "Auth Context" as AuthCtx
+participant "Auth Service" as AuthSvc
+participant "Firebase Auth" as Firebase
+participant "API Service" as API
+participant "Dashboard Shell" as Dashboard
+
+User -> LoginComp : Enter credentials
+activate LoginComp
+
+LoginComp -> AuthCtx : login(email, password)
+activate AuthCtx
+
+AuthCtx -> AuthSvc : authenticate(credentials)
+activate AuthSvc
+
+AuthSvc -> Firebase : signInWithEmailAndPassword()
+activate Firebase
+
+Firebase --> AuthSvc : User token + profile
+deactivate Firebase
+
+AuthSvc -> API : setAuthToken(token)
+activate API
+API --> AuthSvc : Token configured
+deactivate API
+
+AuthSvc -> AuthSvc : getPermissions()
+AuthSvc --> AuthCtx : User + permissions
+deactivate AuthSvc
+
+AuthCtx -> AuthCtx : Update context state
+AuthCtx --> LoginComp : Authentication successful
+deactivate AuthCtx
+
+LoginComp -> Dashboard : Navigate to dashboard
+activate Dashboard
+
+Dashboard -> AuthCtx : Check authentication
+AuthCtx --> Dashboard : User authenticated
+
+Dashboard -> API : Initialize data fetching
+activate API
+API --> Dashboard : Initial dashboard data
+deactivate API
+
+Dashboard --> User : Display dashboard
+deactivate Dashboard
+deactivate LoginComp
+
+@enduml
+
+'====================================================================
+' 4. SEQUENCE DIAGRAM - Real-time Data Streaming Flow
+'====================================================================
+
+@startuml Realtime_Data_Flow
+
+!theme plain
+
+participant "Dashboard Component" as Dashboard
+participant "useRealtimeData Hook" as Hook
+participant "WebSocket Context" as WSCtx
+participant "WebSocket Service" as WSSvc
+participant "WebSocket Gateway" as WSGateway
+participant "Event Stream" as EventStream
+
+Dashboard -> Hook : Subscribe to session.updated
+activate Hook
+
+Hook -> WSCtx : subscribe(session.updated, handler)
+activate WSCtx
+
+WSCtx -> WSSvc : addSubscription(session.updated)
+activate WSSvc
+
+alt WebSocket not connected
+    WSSvc -> WSGateway : connect()
+    activate WSGateway
+    WSGateway --> WSSvc : Connection established
+    deactivate WSGateway
+end
+
+WSSvc -> WSSvc : Register event handler
+WSSvc --> WSCtx : Subscription active
+deactivate WSSvc
+
+WSCtx --> Hook : Subscription confirmed
+deactivate WSCtx
+
+note over EventStream : Real-time events occur
+
+EventStream -> WSGateway : New session event
+activate WSGateway
+
+WSGateway -> WSSvc : WebSocket message
+activate WSSvc
+
+WSSvc -> WSSvc : Parse message
+WSSvc -> WSSvc : Validate event
+
+WSSvc -> WSCtx : Emit session.updated event
+activate WSCtx
+
+WSCtx -> Hook : Trigger event handler
+activate Hook
+
+Hook -> Hook : Update local state
+Hook -> Hook : Apply data transformation
+
+Hook -> Dashboard : Re-render with new data
+activate Dashboard
+
+Dashboard --> Dashboard : Update UI components
+deactivate Dashboard
+
+deactivate Hook
+deactivate WSCtx
+deactivate WSSvc
+deactivate WSGateway
+
+@enduml
+
+'====================================================================
+' 5. SEQUENCE DIAGRAM - Revenue Optimization Flow
+'====================================================================
+
+@startuml Revenue_Optimization_Flow
+
+!theme plain
+
+actor "Revenue Manager" as Manager
+participant "Pricing Optimizer" as PricingComp
+participant "usePricingEngine Hook" as PricingHook
+participant "Revenue API Service" as RevenueAPI
+participant "AI Service" as AIService
+participant "Cache Service" as Cache
+
+Manager -> PricingComp : Request pricing optimization
+activate PricingComp
+
+PricingComp -> PricingHook : optimize()
+activate PricingHook
+
+PricingHook -> Cache : Check cached recommendations
+activate Cache
+Cache --> PricingHook : Cache miss or expired
+deactivate Cache
+
+PricingHook -> RevenueAPI : getCurrentMetrics()
+activate RevenueAPI
+RevenueAPI --> PricingHook : Current revenue data
+deactivate RevenueAPI
+
+PricingHook -> AIService : getPricingRecommendations(metrics)
+activate AIService
+
+AIService -> AIService : Run ML models
+AIService -> AIService : Apply business rules
+AIService -> AIService : Calculate confidence scores
+
+AIService --> PricingHook : Pricing recommendations
+deactivate AIService
+
+PricingHook -> Cache : Store recommendations (TTL: 10min)
+activate Cache
+Cache --> PricingHook : Cached
+deactivate Cache
+
+PricingHook -> PricingHook : Validate recommendations
+PricingHook --> PricingComp : Display recommendations
+deactivate PricingHook
+
+PricingComp --> Manager : Show pricing suggestions
+deactivate PricingComp
+
+alt Manager approves recommendations
+    Manager -> PricingComp : Apply recommendations
+    activate PricingComp
+    
+    PricingComp -> PricingHook : applyRecommendations()
+    activate PricingHook
+    
+    PricingHook -> RevenueAPI : updatePricing(recommendations)
+    activate RevenueAPI
+    RevenueAPI --> PricingHook : Pricing updated
+    deactivate RevenueAPI
+    
+    PricingHook --> PricingComp : Success
+    deactivate PricingHook
+    
+    PricingComp --> Manager : Pricing applied
+    deactivate PricingComp
+end
+
+@enduml
+
+'====================================================================
+' 6. DEPLOYMENT DIAGRAM
+'====================================================================
+
+@startuml Deployment_Diagram
+
+!theme plain
+
+node "Development Environment" {
+    artifact "React Dev Server" as DevServer
+    artifact "Vite HMR" as ViteHMR
+    artifact "TypeScript Compiler" as TSCompiler
+    
+    DevServer --> ViteHMR : Hot reload
+    ViteHMR --> TSCompiler : Type checking
+}
+
+node "Build Pipeline" {
+    artifact "Vite Build" as ViteBuild
+    artifact "TypeScript Build" as TSBuild
+    artifact "Bundle Optimizer" as BundleOpt
+    artifact "Asset Pipeline" as AssetPipe
+    
+    TSBuild --> ViteBuild : Compiled code
+    ViteBuild --> BundleOpt : Optimized bundle
+    BundleOpt --> AssetPipe : Static assets
+}
+
+node "CDN / Static Hosting" {
+    artifact "Static Assets" as StaticAssets
+    artifact "HTML Shell" as HTMLShell
+    artifact "JavaScript Bundle" as JSBundle
+    artifact "CSS Bundle" as CSSBundle
+    
+    StaticAssets --> HTMLShell
+    StaticAssets --> JSBundle
+    StaticAssets --> CSSBundle
+}
+
+node "API Server" {
+    artifact "TurnkeyHMS API" as HMSAPI
+    artifact "Analytics Service" as AnalyticsAPI
+    artifact "Revenue Service" as RevenueAPI
+    artifact "AI Service" as AIAPI
+    
+    HMSAPI --> AnalyticsAPI : Internal routing
+    HMSAPI --> RevenueAPI : Internal routing
+    HMSAPI --> AIAPI : Internal routing
+}
+
+node "WebSocket Server" {
+    artifact "WebSocket Gateway" as WSGateway
+    artifact "Event Router" as EventRouter
+    artifact "Connection Manager" as ConnManager
+    
+    WSGateway --> EventRouter : Route events
+    EventRouter --> ConnManager : Manage connections
+}
+
+node "Authentication Server" {
+    artifact "Firebase Auth" as FirebaseAuth
+    artifact "JWT Service" as JWTService
+    artifact "Permission Service" as PermissionSvc
+    
+    FirebaseAuth --> JWTService : Token generation
+    JWTService --> PermissionSvc : Role resolution
+}
+
+node "Caching Layer" {
+    artifact "Redis Cache" as Redis
+    artifact "CDN Cache" as CDNCache
+    
+    Redis --> CDNCache : Cache invalidation
+}
+
+node "Monitoring & Logging" {
+    artifact "Error Tracking" as ErrorTrack
+    artifact "Performance Monitor" as PerfMonitor
+    artifact "Analytics Tracker" as AnalyticsTracker
+    
+    ErrorTrack --> PerfMonitor : Performance data
+    PerfMonitor --> AnalyticsTracker : Usage metrics
+}
+
+DevServer ..> ViteBuild : Build for production
+AssetPipe ..> StaticAssets : Deploy assets
+
+HTMLShell --> JSBundle : Loads application
+JSBundle --> HMSAPI : API requests
+JSBundle --> WSGateway : WebSocket connection
+JSBundle --> FirebaseAuth : Authentication
+
+HMSAPI --> Redis : Cache responses
+WSGateway --> Redis : Session storage
+FirebaseAuth --> Redis : Token cache
+
+JSBundle --> ErrorTrack : Error reporting
+JSBundle --> PerfMonitor : Performance data
+JSBundle --> AnalyticsTracker : Usage events
+
+@enduml
+
+'====================================================================
+' 7. ACTIVITY DIAGRAM - Session Analytics Analysis Process
+'====================================================================
+
+@startuml Session_Analytics_Activity
+
+!theme plain
+
+start
+
+:User opens Session Analytics dashboard;
+
+:Load initial session data from cache;
+
+if (Cache hit?) then (yes)
+    :Display cached session data;
+    :Show "stale data" indicator;
+else (no)
+    :Show loading skeleton;
+endif
+
+:Fetch fresh session data from API;
+
+if (API request successful?) then (yes)
+    :Update cache with fresh data;
+    :Remove stale data indicator;
+else (no)
+    :Show error message;
+    :Retry with exponential backoff;
+    if (Retry successful?) then (yes)
+        :Update cache with fresh data;
+    else (no)
+        :Display "offline mode" message;
+        :Continue with cached data;
+    endif
+endif
+
+:Subscribe to real-time session events;
+
+partition "Real-time Processing" {
+    :Receive session event via WebSocket;
+    
+    if (Event type?) then (session.started)
+        :Add new session to active list;
+        :Update active user count;
+    elseif (session.updated)
+        :Update session in real-time;
+        :Recalculate metrics;
+    elseif (session.ended)
+        :Move session to completed;
+        :Update conversion metrics;
+    endif
+    
+    :Apply data transformations;
+    :Update UI components;
+}
+
+:User interacts with filters;
+
+if (Filter changed?) then (yes)
+    :Apply filters to dataset;
+    :Update URL with filter state;
+    :Recalculate aggregated metrics;
+    :Update visualizations;
+endif
+
+:User clicks on funnel stage;
+
+:Drill down to stage details;
+:Show session breakdown;
+:Display drop-off analysis;
+
+:User exports data;
+
+:Generate export file;
+:Download CSV/PDF report;
+
+stop
+
+@enduml
+
+'====================================================================
+' 8. ACTIVITY DIAGRAM - Revenue Optimization Workflow
+'====================================================================
+
+@startuml Revenue_Optimization_Activity
+
+!theme plain
+
+start
+
+:Revenue Manager accesses Pricing Optimizer;
+
+:Load current revenue metrics;
+:Display occupancy trends;
+:Show competitor analysis;
+
+:Manager requests pricing optimization;
+
+partition "AI Analysis" {
+    :Gather historical booking data;
+    :Analyze seasonal patterns;
+    :Evaluate competitor pricing;
+    :Consider market events;
+    
+    :Run ML prediction models;
+    :Calculate demand elasticity;
+    :Generate pricing recommendations;
+    :Assign confidence scores;
+}
+
+:Apply business rules validation;
+
+if (Recommendations valid?) then (yes)
+    :Display pricing suggestions;
+    :Show expected revenue impact;
+    :Highlight risk factors;
+else (no)
+    :Log validation errors;
+    :Display fallback recommendations;
+    :Notify of limitations;
+endif
+
+:Manager reviews recommendations;
+
+if (Manager approves?) then (yes)
+    partition "Price Implementation" {
+        :Validate rate parity rules;
+        :Check minimum price thresholds;
+        :Ensure maximum daily changes;
+        
+        if (All validations pass?) then (yes)
+            :Apply pricing changes;
+            :Update booking engine;
+            :Notify channel partners;
+            :Log pricing decisions;
+        else (no)
+            :Show validation errors;
+            :Request manual override;
+            
+            if (Override approved?) then (yes)
+                :Apply with override flag;
+                :Log override reason;
+            else (no)
+                :Cancel pricing update;
+                :Return to recommendations;
+            endif
+        endif
+    }
+    
+    :Monitor pricing performance;
+    :Track booking velocity changes;
+    :Update ML models with results;
+    
+else (no)
+    :Save recommendations as draft;
+    :Allow manual price adjustments;
+    :Provide "what-if" scenarios;
+endif
+
+:Generate pricing report;
+:Update revenue dashboard;
+:Schedule next optimization;
+
+stop
+
+@enduml
+
+'====================================================================
+' 9. USE CASE DIAGRAM
+'====================================================================
+
+@startuml Use_Case_Diagram
+
+!theme plain
+
+left to right direction
+
+actor "Hotel Manager" as Manager
+actor "Revenue Analyst" as Analyst
+actor "Data Scientist" as DataScientist
+actor "System Admin" as Admin
+
+rectangle "TurnkeyHMS Admin Dashboard" {
+    
+    package "Authentication & Authorization" {
+        usecase "Login to Dashboard" as Login
+        usecase "Manage User Permissions" as Permissions
+        usecase "Reset Password" as ResetPwd
+    }
+    
+    package "Session Analytics" {
+        usecase "View Session Overview" as SessionOverview
+        usecase "Analyze User Journey" as JourneyAnalysis
+        usecase "Track Conversion Funnel" as ConversionFunnel
+        usecase "Monitor Active Sessions" as ActiveSessions
+        usecase "Export Session Data" as ExportSessions
+    }
+    
+    package "Revenue Management" {
+        usecase "Optimize Pricing" as PricingOpt
+        usecase "Generate Demand Forecast" as DemandForecast
+        usecase "Analyze Competitor Rates" as CompetitorAnalysis
+        usecase "Track Revenue Performance" as RevenueTracking
+        usecase "Apply Pricing Rules" as PricingRules
+    }
+    
+    package "AI Insights" {
+        usecase "Generate Predictive Models" as PredictiveModels
+        usecase "Detect Anomalies" as AnomalyDetection
+        usecase "Recommend Actions" as ActionRecommendations
+        usecase "Analyze Customer Segments" as CustomerSegments
+        usecase "Predict Churn Risk" as ChurnPrediction
+    }
+    
+    package "Real-time Monitoring" {
+        usecase "Monitor Live Bookings" as LiveBookings
+        usecase "Track System Health" as SystemHealth
+        usecase "View Activity Feed" as ActivityFeed
+        usecase "Receive Alerts" as ReceiveAlerts
+    }
+    
+    package "Data Management" {
+        usecase "Filter Dashboard Data" as FilterData
+        usecase "Customize Time Ranges" as TimeRanges
+        usecase "Export Reports" as ExportReports
+        usecase "Configure Dashboards" as ConfigDashboards
+    }
+    
+    package "System Administration" {
+        usecase "Manage System Settings" as SystemSettings
+        usecase "Monitor Performance" as MonitorPerf
+        usecase "Manage Integrations" as ManageIntegrations
+        usecase "View System Logs" as ViewLogs
+    }
+}
+
+Manager --> Login
+Manager --> SessionOverview
+Manager --> JourneyAnalysis
+Manager --> ConversionFunnel
+Manager --> PricingOpt
+Manager --> DemandForecast
+Manager --> RevenueTracking
+Manager --> LiveBookings
+Manager --> ActivityFeed
+Manager --> FilterData
+Manager --> TimeRanges
+Manager --> ExportReports
+Manager --> ReceiveAlerts
+
+Analyst --> Login
+Analyst --> SessionOverview
+Analyst --> JourneyAnalysis
+Analyst --> ConversionFunnel
+Analyst --> ActiveSessions
+Analyst --> ExportSessions
+Analyst --> CompetitorAnalysis
+Analyst --> RevenueTracking
+Analyst --> PredictiveModels
+Analyst --> AnomalyDetection
+Analyst --> CustomerSegments
+Analyst --> FilterData
+Analyst --> TimeRanges
+Analyst --> ExportReports
+Analyst --> ConfigDashboards
+
+DataScientist --> Login
+DataScientist --> PredictiveModels
+DataScientist --> AnomalyDetection
+DataScientist --> ActionRecommendations
+DataScientist --> CustomerSegments
+DataScientist --> ChurnPrediction
+DataScientist --> ExportSessions
+DataScientist --> FilterData
+DataScientist --> ExportReports
+
+Admin --> Login
+Admin --> Permissions
+Admin --> ResetPwd
+Admin --> SystemSettings
+Admin --> MonitorPerf
+Admin --> ManageIntegrations
+Admin --> ViewLogs
+Admin --> SystemHealth
+
+Login <-- Permissions : extends
+SessionOverview <-- JourneyAnalysis : includes
+ConversionFunnel <-- JourneyAnalysis : includes
+PricingOpt <-- DemandForecast : includes
+PricingOpt <-- CompetitorAnalysis : includes
+PricingOpt <-- PricingRules : includes
+PredictiveModels <-- ActionRecommendations : includes
+AnomalyDetection <-- ReceiveAlerts : extends
+FilterData <-- TimeRanges : includes
+ExportReports <-- ExportSessions : extends
+
+@enduml
+

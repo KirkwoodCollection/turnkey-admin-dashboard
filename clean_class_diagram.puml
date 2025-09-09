@@ -1,0 +1,330 @@
+@startuml TurnkeyHMS_Class_Diagram
+
+!theme plain
+
+package "External Systems" {
+    class TurnkeyHMSAPI {
+        +baseURL: string
+        +version: string
+        +getAnalytics(): Promise
+        +getRevenue(): Promise
+        +getSessions(): Promise
+    }
+    
+    class WebSocketGateway {
+        +url: string
+        +connect(): Promise
+        +disconnect(): void
+        +subscribe(event: string): void
+        +emit(event: string, data: any): void
+    }
+    
+    class FirebaseAuth {
+        +authenticate(credentials): Promise
+        +refreshToken(): Promise
+        +logout(): Promise
+    }
+}
+
+package "React Contexts" {
+    class AuthContext {
+        +user: User
+        +isAuthenticated: boolean
+        +isLoading: boolean
+        +permissions: Permission[]
+        +role: UserRole
+        +login(email: string, password: string): Promise
+        +logout(): Promise
+        +hasPermission(permission): boolean
+        +canAccess(resource: string): boolean
+    }
+    
+    class WebSocketContext {
+        +isConnected: boolean
+        +connectionStatus: string
+        +subscribe(event: string, handler): void
+        +unsubscribe(event: string, handler): void
+        +send(message: any): void
+        +reconnect(): void
+    }
+    
+    class FilterContext {
+        +timeRange: TimeRange
+        +dateRange: DateRange
+        +selectedProperties: string[]
+        +searchQuery: string
+        +customFilters: object
+        +setTimeRange(range): void
+        +setDateRange(range): void
+        +toggleProperty(propertyId: string): void
+        +clearFilters(): void
+        +hasActiveFilters: boolean
+    }
+}
+
+package "Services Layer" {
+    abstract class BaseService {
+        #apiClient: object
+        #cache: object
+        +initialize(): void
+        +destroy(): void
+        #handleError(error): void
+    }
+    
+    class APIService extends BaseService {
+        +endpoints: object
+        +get(url: string): Promise
+        +post(url: string, data: any): Promise
+        +put(url: string, data: any): Promise
+        +delete(url: string): Promise
+    }
+    
+    class WebSocketService extends BaseService {
+        -connection: WebSocket
+        -eventEmitter: object
+        -messageQueue: array
+        -reconnectAttempts: number
+        +connect(): Promise
+        +disconnect(): void
+        +subscribe(event: string, handler): void
+        +unsubscribe(event: string, handler): void
+        +send(message: any): void
+    }
+    
+    class CacheService extends BaseService {
+        -cache: Map
+        +get(key: string): any
+        +set(key: string, value: any, ttl: number): void
+        +invalidate(key: string): void
+        +clear(): void
+    }
+    
+    class AuthService extends BaseService {
+        +currentUser: User
+        +isAuthenticated: boolean
+        +login(credentials): Promise
+        +logout(): Promise
+        +refreshToken(): Promise
+        +getPermissions(): array
+    }
+}
+
+package "Custom Hooks" {
+    class UseRealtimeData {
+        +eventType: string
+        +data: array
+        +latestData: any
+        +isConnected: boolean
+        +buffer: array
+        +clearBuffer(): void
+    }
+    
+    class UseCacheFirst {
+        +key: string
+        +data: any
+        +isLoading: boolean
+        +isError: boolean
+        +error: Error
+        +isStale: boolean
+        +refetch(): void
+    }
+    
+    class UseWebSocket {
+        +isConnected: boolean
+        +connectionStatus: string
+        +subscribe(event: string, handler): void
+        +unsubscribe(event: string, handler): void
+        +send(message: any): void
+    }
+}
+
+package "Feature Modules" {
+    package "AI Insights" {
+        class AIInsightsModule {
+            +components: array
+            +hooks: array
+            +services: array
+        }
+        
+        class PredictiveModels {
+            +props: object
+            +render(): ReactElement
+        }
+        
+        class UseMLPredictions {
+            +predictions: array
+            +isLoading: boolean
+            +confidence: number
+            +refresh(): void
+        }
+    }
+    
+    package "Revenue Management" {
+        class RevenueManagementModule {
+            +components: array
+            +hooks: array
+            +services: array
+        }
+        
+        class PricingOptimizer {
+            +props: object
+            +render(): ReactElement
+        }
+        
+        class UsePricingEngine {
+            +recommendations: array
+            +isOptimizing: boolean
+            +optimize(): void
+            +applyRecommendations(): void
+        }
+    }
+    
+    package "Session Analytics" {
+        class SessionAnalyticsModule {
+            +components: array
+            +hooks: array
+            +services: array
+        }
+        
+        class ConversionFunnel {
+            +props: object
+            +render(): ReactElement
+        }
+        
+        class UseSessionData {
+            +sessions: array
+            +activeSessions: array
+            +metrics: object
+            +refresh(): void
+        }
+    }
+}
+
+package "Shared Components" {
+    abstract class BaseComponent {
+        +props: object
+        +render(): ReactElement
+        #handleError(error): void
+        #validateProps(): boolean
+    }
+    
+    class DataTable extends BaseComponent {
+        +data: array
+        +columns: array
+        +sortable: boolean
+        +filterable: boolean
+        +onSort(column: string, direction: string): void
+        +onFilter(filters: object): void
+    }
+    
+    class LoadingStates extends BaseComponent {
+        +type: string
+        +message: string
+        +progress: number
+        +render(): ReactElement
+    }
+    
+    class ErrorBoundary extends BaseComponent {
+        +hasError: boolean
+        +error: Error
+        +componentDidCatch(error, errorInfo): void
+        +render(): ReactElement
+    }
+}
+
+package "Layout Components" {
+    class DashboardShell extends BaseComponent {
+        +children: ReactNode
+        +sidebar: boolean
+        +navigation: object
+        +render(): ReactElement
+    }
+    
+    class NavigationBar extends BaseComponent {
+        +user: User
+        +notifications: array
+        +onLogout(): void
+        +render(): ReactElement
+    }
+    
+    class TimeFilterControls extends BaseComponent {
+        +timeRange: object
+        +presets: array
+        +onChange(range): void
+        +render(): ReactElement
+    }
+}
+
+package "Types" {
+    class User {
+        +id: string
+        +email: string
+        +name: string
+        +role: UserRole
+        +permissions: array
+        +lastLogin: Date
+    }
+    
+    class UserSession {
+        +id: string
+        +userId: string
+        +startTime: Date
+        +endTime: Date
+        +events: array
+        +deviceInfo: object
+        +location: object
+    }
+    
+    class SessionEvent {
+        +id: string
+        +type: EventType
+        +timestamp: Date
+        +data: any
+        +sessionId: string
+    }
+    
+    enum UserRole {
+        ADMIN
+        MANAGER
+        ANALYST
+        VIEWER
+    }
+    
+    enum EventType {
+        PAGE_VIEW
+        BOOKING_ATTEMPT
+        BOOKING_COMPLETE
+        SESSION_START
+        SESSION_END
+    }
+}
+
+AuthContext --> FirebaseAuth
+WebSocketContext --> WebSocketGateway
+FilterContext --> CacheService
+
+APIService --> TurnkeyHMSAPI
+WebSocketService --> WebSocketGateway
+AuthService --> FirebaseAuth
+
+UseRealtimeData --> WebSocketContext
+UseCacheFirst --> APIService
+UseWebSocket --> WebSocketContext
+
+AIInsightsModule --> UseMLPredictions
+RevenueManagementModule --> UsePricingEngine
+SessionAnalyticsModule --> UseSessionData
+
+PredictiveModels --> UseMLPredictions
+ConversionFunnel --> UseSessionData
+DataTable --|> BaseComponent
+
+DashboardShell *-- NavigationBar
+DashboardShell *-- TimeFilterControls
+
+User --> UserRole
+UserSession *-- SessionEvent
+SessionEvent --> EventType
+
+@enduml
+

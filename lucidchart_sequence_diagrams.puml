@@ -1,0 +1,90 @@
+@startuml Authentication Flow
+
+title User Authentication Flow
+
+actor User
+participant "Login Component" as Login
+participant "Auth Context" as AuthCtx
+participant "Auth Service" as AuthSvc
+participant "Firebase Auth" as Firebase
+participant "Dashboard" as Dashboard
+
+User -> Login: Enter credentials
+Login -> AuthCtx: login(email, password)
+AuthCtx -> AuthSvc: authenticate(credentials)
+AuthSvc -> Firebase: signInWithEmailAndPassword()
+Firebase --> AuthSvc: User token + profile
+AuthSvc --> AuthCtx: User + permissions
+AuthCtx --> Login: Authentication successful
+Login -> Dashboard: Navigate to dashboard
+Dashboard -> AuthCtx: Check authentication
+AuthCtx --> Dashboard: User authenticated
+Dashboard --> User: Display dashboard
+
+@enduml
+
+@startuml Real-time Data Flow
+
+title Real-time Data Streaming Flow
+
+participant "Dashboard Component" as Dashboard
+participant "useRealtimeData Hook" as Hook
+participant "WebSocket Context" as WSCtx
+participant "WebSocket Service" as WSSvc
+participant "WebSocket Gateway" as WSGateway
+
+Dashboard -> Hook: Subscribe to session events
+Hook -> WSCtx: subscribe(event, handler)
+WSCtx -> WSSvc: addSubscription(event)
+WSSvc -> WSGateway: connect()
+WSGateway --> WSSvc: Connection established
+WSSvc --> WSCtx: Subscription active
+WSCtx --> Hook: Subscription confirmed
+
+note over WSGateway: Real-time events occur
+
+WSGateway -> WSSvc: WebSocket message
+WSSvc -> WSCtx: Emit event
+WSCtx -> Hook: Trigger event handler
+Hook -> Hook: Update local state
+Hook -> Dashboard: Re-render with new data
+Dashboard --> Dashboard: Update UI components
+
+@enduml
+
+@startuml Revenue Optimization Flow
+
+title Revenue Optimization Workflow
+
+actor "Revenue Manager" as Manager
+participant "Pricing Optimizer" as PricingComp
+participant "usePricingEngine Hook" as PricingHook
+participant "Revenue API Service" as RevenueAPI
+participant "AI Service" as AIService
+participant "Cache Service" as Cache
+
+Manager -> PricingComp: Request pricing optimization
+PricingComp -> PricingHook: optimize()
+PricingHook -> Cache: Check cached recommendations
+Cache --> PricingHook: Cache miss or expired
+PricingHook -> RevenueAPI: getCurrentMetrics()
+RevenueAPI --> PricingHook: Current revenue data
+PricingHook -> AIService: getPricingRecommendations(metrics)
+AIService -> AIService: Run ML models
+AIService -> AIService: Apply business rules
+AIService --> PricingHook: Pricing recommendations
+PricingHook -> Cache: Store recommendations
+PricingHook --> PricingComp: Display recommendations
+PricingComp --> Manager: Show pricing suggestions
+
+alt Manager approves recommendations
+    Manager -> PricingComp: Apply recommendations
+    PricingComp -> PricingHook: applyRecommendations()
+    PricingHook -> RevenueAPI: updatePricing(recommendations)
+    RevenueAPI --> PricingHook: Pricing updated
+    PricingHook --> PricingComp: Success
+    PricingComp --> Manager: Pricing applied
+end
+
+@enduml
+

@@ -1,0 +1,389 @@
+@startuml TurnkeyHMS_Class_Diagram_Fixed
+
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam class {
+    BackgroundColor #E8F4FD
+    BorderColor #1976D2
+    ArrowColor #1976D2
+}
+
+package "External Systems" {
+    class TurnkeyHMSAPI {
+        +baseURL: string
+        +version: string
+        +getAnalytics(): Promise<AnalyticsData>
+        +getRevenue(): Promise<RevenueData>
+        +getSessions(): Promise<SessionData>
+    }
+    
+    class WebSocketGateway {
+        +url: string
+        +connect(): Promise<void>
+        +disconnect(): void
+        +subscribe(event: string): void
+        +emit(event: string, data: any): void
+    }
+    
+    class FirebaseAuth {
+        +authenticate(credentials: AuthCredentials): Promise<User>
+        +refreshToken(): Promise<string>
+        +logout(): Promise<void>
+    }
+}
+
+package "React Contexts" {
+    class AuthContext {
+        +user: User | null
+        +isAuthenticated: boolean
+        +isLoading: boolean
+        +permissions: Permission[]
+        +role: UserRole
+        +login(email: string, password: string): Promise<void>
+        +logout(): Promise<void>
+        +hasPermission(permission: Permission): boolean
+        +canAccess(resource: string): boolean
+    }
+    
+    class WebSocketContext {
+        +isConnected: boolean
+        +connectionStatus: ConnectionStatus
+        +subscribe(event: string, handler: Function): void
+        +unsubscribe(event: string, handler: Function): void
+        +send(message: any): void
+        +reconnect(): void
+    }
+    
+    class FilterContext {
+        +timeRange: TimeRange
+        +dateRange: DateRange
+        +selectedProperties: string[]
+        +searchQuery: string
+        +customFilters: Record<string, any>
+        +setTimeRange(range: TimeRange): void
+        +setDateRange(range: DateRange): void
+        +toggleProperty(propertyId: string): void
+        +clearFilters(): void
+        +hasActiveFilters: boolean
+    }
+}
+
+package "Services Layer" {
+    abstract class BaseService {
+        #apiClient: AxiosInstance
+        #cache: CacheManager
+        +initialize(): void
+        +destroy(): void
+        #handleError(error: Error): void
+    }
+    
+    class APIService extends BaseService {
+        +endpoints: EndpointConfig
+        +get<T>(url: string): Promise<T>
+        +post<T>(url: string, data: any): Promise<T>
+        +put<T>(url: string, data: any): Promise<T>
+        +delete<T>(url: string): Promise<T>
+        -interceptRequest(config: AxiosRequestConfig): AxiosRequestConfig
+        -interceptResponse(response: AxiosResponse): AxiosResponse
+    }
+    
+    class WebSocketService extends BaseService {
+        -connection: WebSocket
+        -eventEmitter: EventEmitter
+        -messageQueue: Message[]
+        -reconnectAttempts: number
+        +connect(): Promise<void>
+        +disconnect(): void
+        +subscribe(event: string, handler: Function): void
+        +unsubscribe(event: string, handler: Function): void
+        +send(message: any): void
+        -handleReconnection(): void
+        -processMessageQueue(): void
+    }
+    
+    class CacheService extends BaseService {
+        -cache: Map<string, CacheEntry>
+        +get<T>(key: string): T | null
+        +set<T>(key: string, value: T, ttl?: number): void
+        +invalidate(key: string): void
+        +clear(): void
+        -isExpired(entry: CacheEntry): boolean
+        -cleanup(): void
+    }
+    
+    class AuthService extends BaseService {
+        +currentUser: User | null
+        +isAuthenticated: boolean
+        +login(credentials: AuthCredentials): Promise<User>
+        +logout(): Promise<void>
+        +refreshToken(): Promise<string>
+        +getPermissions(): Permission[]
+        -validateToken(token: string): boolean
+    }
+}
+
+package "Custom Hooks" {
+    class UseRealtimeData {
+        +eventType: string
+        +data: any[]
+        +latestData: any
+        +isConnected: boolean
+        +buffer: any[]
+        +clearBuffer(): void
+    }
+    
+    class UseCacheFirst {
+        +key: string
+        +data: any
+        +isLoading: boolean
+        +isError: boolean
+        +error: Error | null
+        +isStale: boolean
+        +refetch(): void
+    }
+    
+    class UseWebSocket {
+        +isConnected: boolean
+        +connectionStatus: ConnectionStatus
+        +subscribe(event: string, handler: Function): void
+        +unsubscribe(event: string, handler: Function): void
+        +send(message: any): void
+    }
+}
+
+package "Feature Modules" {
+    package "AI Insights" {
+        class AIInsightsModule {
+            +components: AIComponent[]
+            +hooks: AIHook[]
+            +services: AIService[]
+        }
+        
+        class PredictiveModels {
+            +props: PredictiveModelsProps
+            +render(): ReactElement
+            -calculatePredictions(): Prediction[]
+            -formatData(): ChartData
+        }
+        
+        class AnomalyDetection {
+            +props: AnomalyDetectionProps
+            +render(): ReactElement
+            -detectAnomalies(): Anomaly[]
+            -highlightAnomalies(): void
+        }
+        
+        class UseMLPredictions {
+            +predictions: Prediction[]
+            +isLoading: boolean
+            +confidence: number
+            +refresh(): void
+        }
+    }
+    
+    package "Revenue Management" {
+        class RevenueManagementModule {
+            +components: RevenueComponent[]
+            +hooks: RevenueHook[]
+            +services: RevenueService[]
+        }
+        
+        class PricingOptimizer {
+            +props: PricingOptimizerProps
+            +render(): ReactElement
+            -calculateOptimalPricing(): PriceRecommendation[]
+            -validatePriceRules(): boolean
+        }
+        
+        class DemandForecast {
+            +props: DemandForecastProps
+            +render(): ReactElement
+            -generateForecast(): ForecastData
+            -calculateConfidenceIntervals(): ConfidenceInterval[]
+        }
+        
+        class UsePricingEngine {
+            +recommendations: PriceRecommendation[]
+            +isOptimizing: boolean
+            +optimize(): void
+            +applyRecommendations(): void
+        }
+    }
+    
+    package "Session Analytics" {
+        class SessionAnalyticsModule {
+            +components: SessionComponent[]
+            +hooks: SessionHook[]
+            +services: SessionService[]
+        }
+        
+        class ConversionFunnel {
+            +props: ConversionFunnelProps
+            +render(): ReactElement
+            -calculateConversionRates(): ConversionRate[]
+            -identifyDropOffPoints(): DropOffPoint[]
+        }
+        
+        class JourneyMap {
+            +props: JourneyMapProps
+            +render(): ReactElement
+            -mapUserJourney(): JourneyStep[]
+            -calculateTimeSpent(): Duration[]
+        }
+        
+        class UseSessionData {
+            +sessions: UserSession[]
+            +activeSessions: UserSession[]
+            +metrics: SessionMetrics
+            +refresh(): void
+        }
+    }
+}
+
+package "Shared Components" {
+    abstract class BaseComponent {
+        +props: ComponentProps
+        +render(): ReactElement
+        #handleError(error: Error): void
+        #validateProps(): boolean
+    }
+    
+    class DataTable extends BaseComponent {
+        +data: any[]
+        +columns: Column[]
+        +sortable: boolean
+        +filterable: boolean
+        +onSort(column: string, direction: SortDirection): void
+        +onFilter(filters: FilterCriteria): void
+        -renderHeader(): ReactElement
+        -renderRow(item: any): ReactElement
+    }
+    
+    class LoadingStates extends BaseComponent {
+        +type: LoadingType
+        +message?: string
+        +progress?: number
+        +render(): ReactElement
+        -renderSkeleton(): ReactElement
+        -renderSpinner(): ReactElement
+    }
+    
+    class ErrorBoundary extends BaseComponent {
+        +hasError: boolean
+        +error: Error | null
+        +componentDidCatch(error: Error, errorInfo: ErrorInfo): void
+        +render(): ReactElement
+        -reportError(error: Error): void
+    }
+}
+
+package "Layout Components" {
+    class DashboardShell extends BaseComponent {
+        +children: ReactNode
+        +sidebar: boolean
+        +navigation: NavigationConfig
+        +render(): ReactElement
+        -handleNavigation(route: string): void
+    }
+    
+    class NavigationBar extends BaseComponent {
+        +user: User
+        +notifications: Notification[]
+        +onLogout(): void
+        +render(): ReactElement
+        -renderUserMenu(): ReactElement
+        -renderNotifications(): ReactElement
+    }
+    
+    class TimeFilterControls extends BaseComponent {
+        +timeRange: TimeRange
+        +presets: TimePreset[]
+        +onChange(range: TimeRange): void
+        +render(): ReactElement
+        -renderPresets(): ReactElement
+        -renderCustomPicker(): ReactElement
+    }
+}
+
+package "Types & Models" {
+    class User {
+        +id: string
+        +email: string
+        +name: string
+        +role: UserRole
+        +permissions: Permission[]
+        +lastLogin: Date
+    }
+    
+    class UserSession {
+        +id: string
+        +userId: string
+        +startTime: Date
+        +endTime?: Date
+        +events: SessionEvent[]
+        +deviceInfo: DeviceInfo
+        +location: Location
+    }
+    
+    class RevenueMetrics {
+        +revPAR: number
+        +adr: number
+        +occupancy: number
+        +period: DateRange
+        +variance: number
+        +trend: TrendDirection
+    }
+    
+    class SessionEvent {
+        +id: string
+        +type: EventType
+        +timestamp: Date
+        +data: any
+        +sessionId: string
+    }
+    
+    enum UserRole {
+        ADMIN
+        MANAGER
+        ANALYST
+        VIEWER
+    }
+    
+    enum EventType {
+        PAGE_VIEW
+        BOOKING_ATTEMPT
+        BOOKING_COMPLETE
+        SESSION_START
+        SESSION_END
+    }
+}
+
+/' Relationships '/
+AuthContext --> FirebaseAuth : uses
+WebSocketContext --> WebSocketGateway : "connects to"
+FilterContext --> CacheService : "persists state"
+
+APIService --> TurnkeyHMSAPI : "communicates with"
+WebSocketService --> WebSocketGateway : "manages connection"
+AuthService --> FirebaseAuth : "integrates with"
+
+UseRealtimeData --> WebSocketContext : "subscribes to"
+UseCacheFirst --> APIService : "fetches data"
+UseWebSocket --> WebSocketContext : accesses
+
+AIInsightsModule --> UseMLPredictions : contains
+RevenueManagementModule --> UsePricingEngine : contains
+SessionAnalyticsModule --> UseSessionData : contains
+
+PredictiveModels --> UseMLPredictions : uses
+ConversionFunnel --> UseSessionData : uses
+DataTable --|> BaseComponent : extends
+
+DashboardShell *-- NavigationBar : contains
+DashboardShell *-- TimeFilterControls : contains
+
+User --> UserRole : has
+UserSession *-- SessionEvent : contains
+SessionEvent --> EventType : "typed by"
+
+@enduml

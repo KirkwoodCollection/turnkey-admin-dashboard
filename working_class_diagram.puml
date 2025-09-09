@@ -1,0 +1,182 @@
+@startuml
+
+class TurnkeyAPI {
+  baseURL : string
+  getAnalytics()
+  getRevenue()
+  getSessions()
+}
+
+class WebSocketGateway {
+  url : string
+  connect()
+  disconnect()
+  subscribe()
+}
+
+class FirebaseAuth {
+  authenticate()
+  refreshToken()
+  logout()
+}
+
+class AuthContext {
+  user : User
+  isAuthenticated : boolean
+  login()
+  logout()
+  hasPermission()
+}
+
+class WebSocketContext {
+  isConnected : boolean
+  subscribe()
+  unsubscribe()
+  send()
+}
+
+class FilterContext {
+  timeRange : object
+  dateRange : object
+  setTimeRange()
+  clearFilters()
+}
+
+class APIService {
+  get()
+  post()
+  put()
+  delete()
+}
+
+class WebSocketService {
+  connect()
+  disconnect()
+  subscribe()
+  send()
+}
+
+class CacheService {
+  get()
+  set()
+  invalidate()
+  clear()
+}
+
+class AuthService {
+  login()
+  logout()
+  refreshToken()
+}
+
+class UseRealtimeData {
+  data : array
+  isConnected : boolean
+  clearBuffer()
+}
+
+class UseCacheFirst {
+  data : any
+  isLoading : boolean
+  refetch()
+}
+
+class UseWebSocket {
+  isConnected : boolean
+  subscribe()
+  send()
+}
+
+class PredictiveModels {
+  render()
+}
+
+class AnomalyDetection {
+  render()
+}
+
+class UseMLPredictions {
+  predictions : array
+  refresh()
+}
+
+class PricingOptimizer {
+  render()
+}
+
+class DemandForecast {
+  render()
+}
+
+class UsePricingEngine {
+  recommendations : array
+  optimize()
+}
+
+class ConversionFunnel {
+  render()
+}
+
+class JourneyMap {
+  render()
+}
+
+class UseSessionData {
+  sessions : array
+  refresh()
+}
+
+class DataTable {
+  data : array
+  render()
+}
+
+class LoadingStates {
+  render()
+}
+
+class ErrorBoundary {
+  render()
+}
+
+class DashboardShell {
+  render()
+}
+
+class NavigationBar {
+  render()
+}
+
+class TimeFilterControls {
+  render()
+}
+
+class User {
+  id : string
+  email : string
+  name : string
+}
+
+class UserSession {
+  id : string
+  userId : string
+  startTime : Date
+}
+
+AuthContext --> FirebaseAuth
+WebSocketContext --> WebSocketGateway
+FilterContext --> CacheService
+APIService --> TurnkeyAPI
+WebSocketService --> WebSocketGateway
+AuthService --> FirebaseAuth
+UseRealtimeData --> WebSocketContext
+UseCacheFirst --> APIService
+UseWebSocket --> WebSocketContext
+PredictiveModels --> UseMLPredictions
+ConversionFunnel --> UseSessionData
+PricingOptimizer --> UsePricingEngine
+DashboardShell --> NavigationBar
+DashboardShell --> TimeFilterControls
+
+@enduml
+
