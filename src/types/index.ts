@@ -1,5 +1,22 @@
 import { z } from 'zod';
-import { SystemHealthResponse, HealthHistoryPoint, ServiceDependency, IntegrationTestSuite } from '../api/systemHealth';
+import { 
+  SystemHealthResponse, 
+  HealthHistoryPoint, 
+  ServiceDependency, 
+  IntegrationTestSuite,
+  ServiceHealthStatus,
+  IntegrationTestResult
+} from '../api/systemHealth';
+
+// Re-export health-related types for convenience
+export type { 
+  SystemHealthResponse, 
+  HealthHistoryPoint, 
+  ServiceDependency, 
+  IntegrationTestSuite,
+  ServiceHealthStatus,
+  IntegrationTestResult
+};
 
 // Validation schemas
 export const SessionSchema = z.object({

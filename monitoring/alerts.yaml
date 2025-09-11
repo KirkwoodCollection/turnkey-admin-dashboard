@@ -1,0 +1,118 @@
+alertPolicy:
+  displayName: "Admin Dashboard - High Error Rate"
+  documentation:
+    content: "Alert when error rate exceeds 1% for 5 minutes"
+  conditions:
+    - displayName: "Error Rate > 1%"
+      conditionThreshold:
+        filter: |
+          resource.type="cloud_run_revision"
+          resource.labels.service_name="admin-dashboard"
+          metric.type="run.googleapis.com/request_count"
+          metric.labels.response_code_class!="2xx"
+        comparison: COMPARISON_GREATER_THAN
+        thresholdValue: 0.01
+        duration: 300s
+        aggregations:
+          - alignmentPeriod: 60s
+            perSeriesAligner: ALIGN_RATE
+            crossSeriesReducer: REDUCE_SUM
+  enabled: true
+  
+---
+
+alertPolicy:
+  displayName: "Admin Dashboard - High Latency"
+  documentation:
+    content: "Alert when 95th percentile latency exceeds 1 second for 5 minutes"
+  conditions:
+    - displayName: "P95 Latency > 1000ms"
+      conditionThreshold:
+        filter: |
+          resource.type="cloud_run_revision"
+          resource.labels.service_name="admin-dashboard"
+          metric.type="run.googleapis.com/request_latencies"
+        comparison: COMPARISON_GREATER_THAN
+        thresholdValue: 1000
+        duration: 300s
+        aggregations:
+          - alignmentPeriod: 60s
+            perSeriesAligner: ALIGN_DELTA
+            crossSeriesReducer: REDUCE_PERCENTILE_95
+  enabled: true
+
+---
+
+alertPolicy:
+  displayName: "Admin Dashboard - Low Cache Hit Rate"
+  documentation:
+    content: "Alert when CDN cache hit rate drops below 80% for 10 minutes"
+  conditions:
+    - displayName: "Cache Hit Rate < 80%"
+      conditionThreshold:
+        filter: |
+          resource.type="cloud_cdn_bucket"
+          metric.type="loadbalancing.googleapis.com/https/cache_hit_rate"
+        comparison: COMPARISON_LESS_THAN
+        thresholdValue: 0.8
+        duration: 600s
+        aggregations:
+          - alignmentPeriod: 300s
+            perSeriesAligner: ALIGN_MEAN
+            crossSeriesReducer: REDUCE_MEAN
+  enabled: true
+
+---
+
+alertPolicy:
+  displayName: "Admin Dashboard - High Memory Usage"
+  documentation:
+    content: "Alert when memory usage exceeds 85% for 5 minutes"
+  conditions:
+    - displayName: "Memory Usage > 85%"
+      conditionThreshold:
+        filter: |
+          resource.type="cloud_run_revision"
+          resource.labels.service_name="admin-dashboard"
+          metric.type="run.googleapis.com/container/memory/utilizations"
+        comparison: COMPARISON_GREATER_THAN
+        thresholdValue: 0.85
+        duration: 300s
+        aggregations:
+          - alignmentPeriod: 60s
+            perSeriesAligner: ALIGN_MEAN
+            crossSeriesReducer: REDUCE_MEAN
+  enabled: true
+
+---
+
+alertPolicy:
+  displayName: "Admin Dashboard - Poor Web Vitals"
+  documentation:
+    content: "Alert when Core Web Vitals exceed thresholds"
+  conditions:
+    - displayName: "LCP > 2.5s"
+      conditionThreshold:
+        filter: |
+          metric.type="custom.googleapis.com/admin_dashboard/web_vitals"
+          metric.labels.metric_name="LCP"
+        comparison: COMPARISON_GREATER_THAN
+        thresholdValue: 2500
+        duration: 600s
+        aggregations:
+          - alignmentPeriod: 300s
+            perSeriesAligner: ALIGN_MEAN
+            crossSeriesReducer: REDUCE_PERCENTILE_95
+    - displayName: "CLS > 0.1"
+      conditionThreshold:
+        filter: |
+          metric.type="custom.googleapis.com/admin_dashboard/web_vitals"
+          metric.labels.metric_name="CLS"
+        comparison: COMPARISON_GREATER_THAN
+        thresholdValue: 0.1
+        duration: 600s
+        aggregations:
+          - alignmentPeriod: 300s
+            perSeriesAligner: ALIGN_MEAN
+            crossSeriesReducer: REDUCE_PERCENTILE_95
+  enabled: true

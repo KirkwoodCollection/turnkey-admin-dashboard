@@ -1,0 +1,200 @@
+displayName: Admin Dashboard Production
+mosaicLayout:
+  columns: 12
+  tiles:
+    - width: 6
+      height: 4
+      widget:
+        title: Request Latency (p50, p95, p99)
+        xyChart:
+          dataSets:
+            - timeSeriesQuery:
+                timeSeriesFilter:
+                  filter: |
+                    resource.type="cloud_run_revision"
+                    resource.labels.service_name="admin-dashboard"
+                    metric.type="run.googleapis.com/request_latencies"
+                  aggregation:
+                    alignmentPeriod: 60s
+                    perSeriesAligner: ALIGN_DELTA
+                    crossSeriesReducer: REDUCE_PERCENTILE_50
+                    groupByFields:
+                      - "resource.service_name"
+            - timeSeriesQuery:
+                timeSeriesFilter:
+                  filter: |
+                    resource.type="cloud_run_revision"
+                    resource.labels.service_name="admin-dashboard"
+                    metric.type="run.googleapis.com/request_latencies"
+                  aggregation:
+                    alignmentPeriod: 60s
+                    perSeriesAligner: ALIGN_DELTA
+                    crossSeriesReducer: REDUCE_PERCENTILE_95
+            - timeSeriesQuery:
+                timeSeriesFilter:
+                  filter: |
+                    resource.type="cloud_run_revision"
+                    resource.labels.service_name="admin-dashboard"
+                    metric.type="run.googleapis.com/request_latencies"
+                  aggregation:
+                    alignmentPeriod: 60s
+                    perSeriesAligner: ALIGN_DELTA
+                    crossSeriesReducer: REDUCE_PERCENTILE_99
+
+    - width: 6
+      height: 4
+      widget:
+        title: Error Rate
+        xyChart:
+          dataSets:
+            - timeSeriesQuery:
+                timeSeriesFilter:
+                  filter: |
+                    resource.type="cloud_run_revision"
+                    resource.labels.service_name="admin-dashboard"
+                    metric.type="run.googleapis.com/request_count"
+                    metric.labels.response_code_class!="2xx"
+                  aggregation:
+                    alignmentPeriod: 60s
+                    perSeriesAligner: ALIGN_RATE
+                    crossSeriesReducer: REDUCE_SUM
+
+    - width: 4
+      height: 4
+      widget:
+        title: Active Users
+        scorecard:
+          timeSeriesQuery:
+            timeSeriesFilter:
+              filter: |
+                resource.type="cloud_cdn_bucket"
+                metric.type="loadbalancing.googleapis.com/https/request_count"
+              aggregation:
+                alignmentPeriod: 300s
+                perSeriesAligner: ALIGN_RATE
+                crossSeriesReducer: REDUCE_SUM
+
+    - width: 4
+      height: 4
+      widget:
+        title: CDN Cache Hit Rate
+        scorecard:
+          timeSeriesQuery:
+            timeSeriesFilter:
+              filter: |
+                resource.type="cloud_cdn_bucket"
+                metric.type="loadbalancing.googleapis.com/https/cache_hit_rate"
+              aggregation:
+                alignmentPeriod: 300s
+                perSeriesAligner: ALIGN_MEAN
+                crossSeriesReducer: REDUCE_MEAN
+
+    - width: 4
+      height: 4
+      widget:
+        title: WebSocket Connections
+        scorecard:
+          timeSeriesQuery:
+            timeSeriesFilter:
+              filter: |
+                metric.type="custom.googleapis.com/websocket/active_connections"
+              aggregation:
+                alignmentPeriod: 60s
+                perSeriesAligner: ALIGN_MEAN
+                crossSeriesReducer: REDUCE_SUM
+
+    - width: 6
+      height: 4
+      widget:
+        title: Web Vitals - Core Web Vitals
+        xyChart:
+          dataSets:
+            - timeSeriesQuery:
+                timeSeriesFilter:
+                  filter: |
+                    metric.type="custom.googleapis.com/admin_dashboard/web_vitals"
+                    metric.labels.metric_name="CLS"
+                  aggregation:
+                    alignmentPeriod: 300s
+                    perSeriesAligner: ALIGN_MEAN
+                    crossSeriesReducer: REDUCE_PERCENTILE_95
+            - timeSeriesQuery:
+                timeSeriesFilter:
+                  filter: |
+                    metric.type="custom.googleapis.com/admin_dashboard/web_vitals"
+                    metric.labels.metric_name="LCP"
+                  aggregation:
+                    alignmentPeriod: 300s
+                    perSeriesAligner: ALIGN_MEAN
+                    crossSeriesReducer: REDUCE_PERCENTILE_95
+            - timeSeriesQuery:
+                timeSeriesFilter:
+                  filter: |
+                    metric.type="custom.googleapis.com/admin_dashboard/web_vitals"
+                    metric.labels.metric_name="FID"
+                  aggregation:
+                    alignmentPeriod: 300s
+                    perSeriesAligner: ALIGN_MEAN
+                    crossSeriesReducer: REDUCE_PERCENTILE_95
+
+    - width: 6
+      height: 4
+      widget:
+        title: Page Load Performance
+        xyChart:
+          dataSets:
+            - timeSeriesQuery:
+                timeSeriesFilter:
+                  filter: |
+                    metric.type="custom.googleapis.com/admin_dashboard/performance"
+                    metric.labels.trace_name="admin_dashboard_load"
+                  aggregation:
+                    alignmentPeriod: 300s
+                    perSeriesAligner: ALIGN_MEAN
+                    crossSeriesReducer: REDUCE_PERCENTILE_95
+
+    - width: 6
+      height: 4
+      widget:
+        title: Memory Usage
+        xyChart:
+          dataSets:
+            - timeSeriesQuery:
+                timeSeriesFilter:
+                  filter: |
+                    resource.type="cloud_run_revision"
+                    resource.labels.service_name="admin-dashboard"
+                    metric.type="run.googleapis.com/container/memory/utilizations"
+                  aggregation:
+                    alignmentPeriod: 60s
+                    perSeriesAligner: ALIGN_MEAN
+                    crossSeriesReducer: REDUCE_MEAN
+
+    - width: 6
+      height: 4
+      widget:
+        title: CPU Usage
+        xyChart:
+          dataSets:
+            - timeSeriesQuery:
+                timeSeriesFilter:
+                  filter: |
+                    resource.type="cloud_run_revision"
+                    resource.labels.service_name="admin-dashboard"
+                    metric.type="run.googleapis.com/container/cpu/utilizations"
+                  aggregation:
+                    alignmentPeriod: 60s
+                    perSeriesAligner: ALIGN_MEAN
+                    crossSeriesReducer: REDUCE_MEAN
+
+    - width: 12
+      height: 4
+      widget:
+        title: Error Logs
+        logsPanel:
+          filter: |
+            resource.type="cloud_run_revision"
+            resource.labels.service_name="admin-dashboard"
+            severity>=ERROR
+          resourceNames:
+            - "projects/turnkey-hms-prod/logs/run.googleapis.com%2Fstderr"
