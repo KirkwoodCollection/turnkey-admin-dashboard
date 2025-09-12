@@ -1,19 +1,60 @@
-import React from 'react';
-import { Grid, Box } from '@mui/material';
+import React, { useState } from 'react';
+import { Grid, Box, Tab, Tabs, Paper, Typography, Divider } from '@mui/material';
 import { TopStatsPanel } from '../components/TopStatsPanel';
 import { FunnelChart } from '../components/FunnelChart';
+import { ConversionFunnel } from '../components/ConversionFunnel';
 import { TopMetricsPanels } from '../components/TopMetricsPanels';
 import { HeatmapCalendar } from '../components/HeatmapCalendar';
 import { SessionRecordsTable } from '../components/SessionRecordsTable';
+import { EventFilters } from '../components/EventFilters';
+import { EventCategoryChart } from '../components/EventCategoryChart';
+import { EventImportanceChart } from '../components/EventImportanceChart';
+import { UserJourney } from '../components/UserJourney';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useLiveEvents } from '../hooks/useLiveEvents';
 import { useQuery } from '@tanstack/react-query';
 import { analyticsApi } from '../api/analytics';
 import { sessionsApi } from '../api/sessions';
 import { useTimeFilter } from '../contexts/TimeFilterContext';
+import { AnalyticsEvent } from '../types';
 // import { metricsCalculator } from '../utils/metricsCalculator';
 
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`analytics-tabpanel-${index}`}
+      aria-labelledby={`analytics-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ py: 3 }}>
+          {children}
+        </Box>
+      )}
+    </div>
+  );
+}
+
 export const Overview: React.FC = () => {
+  const [tabValue, setTabValue] = useState(0);
+  const [eventFilters, setEventFilters] = useState({
+    categories: [] as string[],
+    eventTypes: [] as string[],
+    importance: [] as string[],
+    sessionId: '',
+    quickFilter: 'all' as string
+  });
+  
   const { selectedFilter } = useTimeFilter();
   const {
     metrics,
@@ -26,6 +67,7 @@ export const Overview: React.FC = () => {
   const { 
     activeUsers, 
     liveSessions,
+    liveEvents
   } = useLiveEvents();
 
   // Get heatmap data
@@ -81,57 +123,256 @@ export const Overview: React.FC = () => {
     // Here you could open a modal or navigate to session details
   };
 
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+  };
+
+  // Convert ActivityRecord to AnalyticsEvent format for new components
+  const convertToAnalyticsEvents = React.useMemo((): AnalyticsEvent[] => {
+    if (!liveEvents) return [];
+    
+    return liveEvents
+      .filter(event => event.metadata?.originalEventType) // Only events with metadata
+      .map(event => ({
+        eventId: event.id,
+        sessionId: event.sessionId,
+        eventType: event.metadata!.originalEventType,
+        timestamp: event.timestamp,
+        data: {}, // We don't have the original data, but components should handle this
+        metadata: event.metadata
+      }));
+  }, [liveEvents]);
+
+  // Filter live events based on current filters
+  const filteredEvents = React.useMemo(() => {
+    if (!convertToAnalyticsEvents) return [];
+    
+    return convertToAnalyticsEvents.filter(event => {
+      // Apply category filter
+      if (eventFilters.categories.length > 0) {
+        const eventCategory = event.metadata?.category || 'uncategorized';
+        if (!eventFilters.categories.includes(eventCategory)) return false;
+      }
+      
+      // Apply event type filter
+      if (eventFilters.eventTypes.length > 0) {
+        if (!eventFilters.eventTypes.includes(event.eventType)) return false;
+      }
+      
+      // Apply importance filter
+      if (eventFilters.importance.length > 0) {
+        const eventImportance = event.metadata?.importance || 'medium';
+        if (!eventFilters.importance.includes(eventImportance)) return false;
+      }
+      
+      // Apply session ID filter
+      if (eventFilters.sessionId) {
+        if (!event.sessionId.toLowerCase().includes(eventFilters.sessionId.toLowerCase())) return false;
+      }
+      
+      // Apply quick filters
+      if (eventFilters.quickFilter !== 'all') {
+        switch (eventFilters.quickFilter) {
+          case 'critical':
+            return event.metadata?.importance === 'critical';
+          case 'conversions':
+            return event.eventType === 'reservation_confirmed';
+          case 'dropoffs':
+            return event.eventType === 'booking_engine_exited';
+          case 'recent':
+            return new Date(event.timestamp).getTime() > Date.now() - 30 * 60 * 1000; // Last 30 minutes
+        }
+      }
+      
+      return true;
+    });
+  }, [liveEvents, eventFilters]);
+
+  // Get unique session IDs from filtered events for UserJourney components
+  const uniqueSessionIds = React.useMemo(() => {
+    const sessionIds = new Set<string>();
+    filteredEvents.forEach(event => sessionIds.add(event.sessionId));
+    return Array.from(sessionIds).slice(0, 10); // Show top 10 sessions
+  }, [filteredEvents]);
+
   return (
     <Box sx={{ width: '100%' }}>
-      {/* Top Statistics Cards */}
+      {/* Top Statistics Cards - Always visible */}
       <TopStatsPanel 
         metrics={metrics || null}
         activeUsers={activeUsers}
         loading={dashboardLoading}
       />
 
-      {/* Main Analytics Section */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        {/* Left side - Funnel Chart */}
-        <Grid item xs={12} lg={8}>
-          <FunnelChart 
-            stages={funnelData}
-            loading={dashboardLoading}
-            height={450}
-          />
-        </Grid>
+      {/* Analytics Tabs */}
+      <Paper sx={{ mt: 3 }}>
+        <Tabs 
+          value={tabValue} 
+          onChange={handleTabChange} 
+          aria-label="analytics tabs"
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+        >
+          <Tab label="Overview" id="analytics-tab-0" />
+          <Tab label="Event Analytics" id="analytics-tab-1" />
+          <Tab label="Conversion Funnel" id="analytics-tab-2" />
+          <Tab label="User Journeys" id="analytics-tab-3" />
+          <Tab label="Legacy Reports" id="analytics-tab-4" />
+        </Tabs>
 
-        {/* Right side - Top Metrics Panels */}
-        <Grid item xs={12} lg={4}>
-          <TopMetricsPanels
-            topDestinations={topDestinations}
-            topHotels={topHotels}
-            funnelStats={funnelStats}
-            loading={dashboardLoading}
-          />
-        </Grid>
-      </Grid>
+        {/* Tab 0: Overview */}
+        <TabPanel value={tabValue} index={0}>
+          <Grid container spacing={3}>
+            {/* Enhanced Conversion Funnel */}
+            <Grid item xs={12}>
+              <ConversionFunnel 
+                events={filteredEvents}
+                loading={dashboardLoading}
+                height={400}
+              />
+            </Grid>
+            
+            {/* Event Analytics Row */}
+            <Grid item xs={12} md={6}>
+              <EventCategoryChart 
+                events={filteredEvents}
+                height={300}
+              />
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <EventImportanceChart 
+                events={filteredEvents}
+                height={300}
+              />
+            </Grid>
+          </Grid>
+        </TabPanel>
 
-      {/* Bottom Section - Heatmap and Sessions */}
-      <Grid container spacing={3}>
-        {/* Heatmap */}
-        <Grid item xs={12} lg={7}>
-          <HeatmapCalendar 
-            data={heatmapData}
-            loading={dashboardLoading}
-            height={350}
-          />
-        </Grid>
+        {/* Tab 1: Event Analytics */}
+        <TabPanel value={tabValue} index={1}>
+          <Grid container spacing={3}>
+            {/* Event Filters */}
+            <Grid item xs={12}>
+              <EventFilters 
+                events={convertToAnalyticsEvents}
+                onFiltersChange={setEventFilters}
+                currentFilters={eventFilters}
+              />
+            </Grid>
+            
+            <Grid item xs={12}>
+              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                Filtered Results: {filteredEvents.length.toLocaleString()} events
+              </Typography>
+              <Divider sx={{ mb: 3 }} />
+            </Grid>
+            
+            {/* Category and Importance Charts */}
+            <Grid item xs={12} lg={6}>
+              <EventCategoryChart 
+                events={filteredEvents}
+                height={400}
+              />
+            </Grid>
+            
+            <Grid item xs={12} lg={6}>
+              <EventImportanceChart 
+                events={filteredEvents}
+                height={400}
+              />
+            </Grid>
+          </Grid>
+        </TabPanel>
 
-        {/* Sessions Table */}
-        <Grid item xs={12} lg={5}>
-          <SessionRecordsTable
-            sessions={allSessions}
+        {/* Tab 2: Enhanced Conversion Funnel */}
+        <TabPanel value={tabValue} index={2}>
+          <ConversionFunnel 
+            events={filteredEvents}
             loading={dashboardLoading}
-            onSessionClick={handleSessionClick}
+            height={500}
           />
-        </Grid>
-      </Grid>
+        </TabPanel>
+
+        {/* Tab 3: User Journeys */}
+        <TabPanel value={tabValue} index={3}>
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                Active User Sessions ({uniqueSessionIds.length.toLocaleString()})
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Individual user journeys through the booking flow
+              </Typography>
+            </Grid>
+            
+            {uniqueSessionIds.map(sessionId => (
+              <Grid item xs={12} md={6} xl={4} key={sessionId}>
+                <UserJourney 
+                  sessionId={sessionId}
+                  events={filteredEvents}
+                  compact={true}
+                  maxEvents={15}
+                />
+              </Grid>
+            ))}
+            
+            {uniqueSessionIds.length === 0 && (
+              <Grid item xs={12}>
+                <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'grey.50' }}>
+                  <Typography variant="body1" color="text.secondary">
+                    No active sessions found. Adjust filters to see user journeys.
+                  </Typography>
+                </Paper>
+              </Grid>
+            )}
+          </Grid>
+        </TabPanel>
+
+        {/* Tab 4: Legacy Reports */}
+        <TabPanel value={tabValue} index={4}>
+          <Grid container spacing={3}>
+            {/* Legacy Funnel Chart */}
+            <Grid item xs={12} lg={8}>
+              <FunnelChart 
+                stages={funnelData}
+                loading={dashboardLoading}
+                height={450}
+                title="Legacy Funnel Analysis"
+              />
+            </Grid>
+
+            {/* Top Metrics Panels */}
+            <Grid item xs={12} lg={4}>
+              <TopMetricsPanels
+                topDestinations={topDestinations}
+                topHotels={topHotels}
+                funnelStats={funnelStats}
+                loading={dashboardLoading}
+              />
+            </Grid>
+            
+            {/* Heatmap */}
+            <Grid item xs={12} lg={7}>
+              <HeatmapCalendar 
+                data={heatmapData}
+                loading={dashboardLoading}
+                height={350}
+              />
+            </Grid>
+
+            {/* Sessions Table */}
+            <Grid item xs={12} lg={5}>
+              <SessionRecordsTable
+                sessions={allSessions}
+                loading={dashboardLoading}
+                onSessionClick={handleSessionClick}
+              />
+            </Grid>
+          </Grid>
+        </TabPanel>
+      </Paper>
     </Box>
   );
 };

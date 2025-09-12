@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useWebSocketContext } from '../contexts/WebSocketContext';
-import { WebSocketMessage, Session, ActivityRecord } from '../types';
+import { WebSocketMessage, Session, ActivityRecord, EventType, EVENT_METADATA, EVENT_CATEGORIES } from '../types';
 import { throttle } from '../utils/rateLimiter';
 
 export const useLiveEvents = () => {
   const [activeUsers, setActiveUsers] = useState(0);
   const [recentActivity, setRecentActivity] = useState<ActivityRecord[]>([]);
+  const [liveEvents, setLiveEvents] = useState<ActivityRecord[]>([]);
   const [liveSessions, setLiveSessions] = useState<Session[]>([]);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
@@ -27,6 +28,14 @@ export const useLiveEvents = () => {
         setLastUpdated(new Date());
         return updated;
       });
+      
+      // Also add to liveEvents for the new analytics components
+      if (activity.metadata?.originalEventType) {
+        setLiveEvents(prev => {
+          const updated = [activity, ...prev].slice(0, 1000); // Keep more events for analytics
+          return updated;
+        });
+      }
     }, 500),
     []
   );
@@ -96,26 +105,23 @@ export const useLiveEvents = () => {
       })
     );
 
-    // Subscribe to new events
+    // Subscribe to new events - enhanced for 28-event system
     unsubscribers.push(
       subscribe('NEW_EVENT', (message: WebSocketMessage) => {
         if (typeof message.payload === 'object' && message.payload) {
           try {
-            const event = message.payload as { 
-              sessionId: string; 
-              eventType: string; 
-              data: Record<string, unknown>;
+            const rawEvent = message.payload as { 
+              sessionId?: string;
+              session_id?: string;
+              eventType?: string; 
+              event_type?: string;
+              data?: Record<string, unknown>;
+              event_data?: Record<string, unknown>;
               timestamp: string;
+              id?: string;
             };
             
-            const activity: ActivityRecord = {
-              id: `${event.sessionId}-${Date.now()}`,
-              sessionId: event.sessionId,
-              event: formatEventType(event.eventType),
-              timestamp: event.timestamp,
-              details: formatEventDetails(event.data),
-              status: 'info'
-            };
+            const activity = processLiveEvent(rawEvent);
             addActivity(activity);
           } catch (error) {
             console.error('Error processing new event:', error);
@@ -132,6 +138,7 @@ export const useLiveEvents = () => {
   return {
     activeUsers,
     recentActivity,
+    liveEvents,
     liveSessions,
     lastUpdated,
     isConnected,
@@ -167,19 +174,137 @@ function getActivityStatus(status: string): ActivityRecord['status'] {
   }
 }
 
+// Enhanced event processing for 28 canonical events
 function formatEventType(eventType: string): string {
-  return eventType
+  const metadata = EVENT_METADATA[eventType as EventType];
+  return metadata?.label || eventType
     .split('_')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
 }
 
-function formatEventDetails(data: Record<string, unknown>): string {
+function getEventIcon(eventType: string): string {
+  const metadata = EVENT_METADATA[eventType as EventType];
+  return metadata?.icon || 'help_outline';
+}
+
+function getEventColor(eventType: string): string {
+  const metadata = EVENT_METADATA[eventType as EventType];
+  return metadata?.color || '#757575';
+}
+
+function getEventImportance(eventType: string): 'low' | 'medium' | 'high' | 'critical' {
+  const metadata = EVENT_METADATA[eventType as EventType];
+  return metadata?.importance || 'medium';
+}
+
+function getEventCategory(eventType: string): string {
+  for (const [category, events] of Object.entries(EVENT_CATEGORIES)) {
+    if (events.includes(eventType as EventType)) {
+      return category;
+    }
+  }
+  return 'uncategorized';
+}
+
+// Enhanced activity record creation for 28-event system
+function processLiveEvent(rawEvent: any): ActivityRecord {
+  const eventType = rawEvent.event_type || rawEvent.eventType;
+  const importance = getEventImportance(eventType);
+  const category = getEventCategory(eventType);
+  
+  // Determine status based on event importance and type
+  let status: ActivityRecord['status'] = 'info';
+  if (eventType === EventType.RESERVATION_CONFIRMED) {
+    status = 'success';
+  } else if (eventType === EventType.BOOKING_ENGINE_EXITED && !rawEvent.data?.completed) {
+    status = 'warning';
+  } else if (importance === 'critical') {
+    status = 'info';
+  } else if (importance === 'low') {
+    status = 'info';
+  }
+  
+  return {
+    id: rawEvent.id || `${rawEvent.sessionId || 'unknown'}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    sessionId: rawEvent.session_id || rawEvent.sessionId || 'unknown',
+    event: formatEventType(eventType),
+    timestamp: new Date(rawEvent.timestamp).toISOString(),
+    details: formatEventDetails(rawEvent.data || rawEvent.event_data || {}, eventType),
+    status: status,
+    metadata: {
+      originalEventType: eventType,
+      icon: getEventIcon(eventType),
+      color: getEventColor(eventType),
+      importance: importance,
+      category: category
+    }
+  };
+}
+
+function formatEventDetails(data: Record<string, unknown>, eventType: string): string {
+  // Custom formatting based on event type
+  switch (eventType) {
+    case EventType.CHECKIN_DATE_SELECTED:
+    case EventType.CHECKOUT_DATE_SELECTED:
+      if (data.date) {
+        return `Date: ${new Date(data.date as string).toLocaleDateString()}`;
+      }
+      break;
+      
+    case EventType.GUEST_COUNT_CHANGED:
+      if (data.guests) {
+        return `Guests: ${data.guests}`;
+      }
+      break;
+      
+    case EventType.ROOM_COUNT_CHANGED:
+      if (data.rooms) {
+        return `Rooms: ${data.rooms}`;
+      }
+      break;
+      
+    case EventType.ROOM_TYPE_SELECTED:
+    case EventType.ROOM_RATE_SELECTED:
+      if (data.room_type && data.rate) {
+        return `${data.room_type} - $${data.rate}/night`;
+      } else if (data.room_type) {
+        return `Room: ${data.room_type}`;
+      }
+      break;
+      
+    case EventType.PAYMENT_METHOD_SELECTED:
+      if (data.method) {
+        return `Payment: ${data.method}`;
+      }
+      break;
+      
+    case EventType.SEARCH_SUBMITTED:
+      const parts = [];
+      if (data.destination) parts.push(`${data.destination}`);
+      if (data.checkin && data.checkout) {
+        parts.push(`${new Date(data.checkin as string).toLocaleDateString()} - ${new Date(data.checkout as string).toLocaleDateString()}`);
+      }
+      if (data.guests) parts.push(`${data.guests} guests`);
+      return parts.join(' • ') || 'Search submitted';
+      
+    case EventType.RESERVATION_CONFIRMED:
+      if (data.confirmation_code) {
+        return `Confirmed: ${data.confirmation_code}`;
+      }
+      break;
+  }
+  
+  // Fallback formatting
   if (data.destination && data.hotel) {
     return `${data.destination} - ${data.hotel}`;
   }
   if (data.action) {
     return String(data.action);
   }
-  return 'Event details';
+  if (data.value) {
+    return String(data.value);
+  }
+  
+  return 'Event processed';
 }
