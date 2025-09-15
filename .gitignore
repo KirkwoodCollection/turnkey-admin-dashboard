@@ -38,6 +38,14 @@ coverage/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.grafana
+
+# Terraform
+terraform.tfvars
+*.tfplan
+.terraform/
+*.tfstate
+*.tfstate.backup
 
 # parcel-bundler cache
 .cache

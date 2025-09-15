@@ -1,0 +1,42 @@
+apiVersion: 1
+
+datasources:
+  # BigQuery datasource for historical analytics
+  - name: BigQuery Analytics
+    type: grafana-bigquery-datasource
+    access: proxy
+    isDefault: true
+    editable: false
+    jsonData:
+      # Use Google Cloud default credentials (service account in Cloud Run)
+      authenticationType: gce
+      # Project ID will be set via environment variable
+      defaultProject: "${GCP_PROJECT_ID}"
+      # Processing location for BigQuery jobs
+      processingLocation: "US"
+    uid: bigquery-analytics
+    version: 1
+
+  # Analytics API datasource for real-time metrics
+  - name: Analytics API
+    type: marcusolsson-json-datasource
+    access: proxy
+    url: "${ANALYTICS_API_URL}"
+    editable: false
+    jsonData:
+      # Internal service-to-service communication
+      authenticationType: none
+      # Default HTTP method
+      httpMethod: GET
+      # Query timeout
+      timeout: 30
+      # TLS/SSL settings
+      tlsSkipVerify: false
+    uid: analytics-api
+    version: 1
+
+deleteDatasources:
+  - name: BigQuery Analytics
+    orgId: 1
+  - name: Analytics API
+    orgId: 1

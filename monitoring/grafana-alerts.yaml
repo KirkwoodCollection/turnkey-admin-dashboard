@@ -1,0 +1,203 @@
+apiVersion: 1
+
+groups:
+  - name: Grafana Service Health
+    interval: 1m
+    rules:
+      - uid: grafana-availability
+        title: Grafana Service Availability
+        condition: A
+        data:
+          - refId: A
+            queryType: ''
+            model:
+              expr: 'up{job="grafana"}'
+              interval: ''
+              refId: A
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: Grafana service is down
+          description: 'Grafana has been unavailable for more than 5 minutes'
+        labels:
+          severity: critical
+          service: grafana
+          team: platform
+
+      - uid: grafana-high-memory
+        title: Grafana High Memory Usage
+        condition: A
+        data:
+          - refId: A
+            queryType: ''
+            model:
+              expr: 'container_memory_usage_bytes{pod=~"grafana.*"} / container_spec_memory_limit_bytes{pod=~"grafana.*"} > 0.9'
+              interval: ''
+              refId: A
+        noDataState: NoData
+        execErrState: Alerting
+        for: 10m
+        annotations:
+          summary: Grafana memory usage is high
+          description: 'Grafana memory usage is above 90% for more than 10 minutes'
+        labels:
+          severity: warning
+          service: grafana
+          team: platform
+
+      - uid: grafana-high-cpu
+        title: Grafana High CPU Usage
+        condition: A
+        data:
+          - refId: A
+            queryType: ''
+            model:
+              expr: 'rate(container_cpu_usage_seconds_total{pod=~"grafana.*"}[5m]) > 1.5'
+              interval: ''
+              refId: A
+        noDataState: NoData
+        execErrState: Alerting
+        for: 15m
+        annotations:
+          summary: Grafana CPU usage is high
+          description: 'Grafana CPU usage is above 150% for more than 15 minutes'
+        labels:
+          severity: warning
+          service: grafana
+          team: platform
+
+  - name: Data Source Health
+    interval: 5m
+    rules:
+      - uid: bigquery-datasource-error
+        title: BigQuery Data Source Error
+        condition: A
+        data:
+          - refId: A
+            datasourceUid: bigquery-analytics
+            queryType: ''
+            model:
+              rawSql: 'SELECT 1'
+              format: time_series
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 10m
+        annotations:
+          summary: BigQuery data source is failing
+          description: 'Cannot connect to BigQuery for more than 10 minutes'
+        labels:
+          severity: critical
+          datasource: bigquery
+          team: platform
+
+      - uid: analytics-api-error
+        title: Analytics API Error Rate
+        condition: A
+        data:
+          - refId: A
+            datasourceUid: analytics-api
+            queryType: ''
+            model:
+              urlPath: '/metrics/realtime'
+              method: GET
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: Analytics API is not responding
+          description: 'Analytics API has been failing for more than 5 minutes'
+        labels:
+          severity: critical
+          datasource: analytics-api
+          team: platform
+
+  - name: Dashboard Performance
+    interval: 5m
+    rules:
+      - uid: slow-dashboard-load
+        title: Slow Dashboard Load Time
+        condition: A
+        data:
+          - refId: A
+            queryType: ''
+            model:
+              expr: 'histogram_quantile(0.95, grafana_http_request_duration_seconds_bucket{handler="/api/dashboards/uid/:uid"}) > 5'
+              interval: ''
+              refId: A
+        noDataState: NoData
+        execErrState: Alerting
+        for: 10m
+        annotations:
+          summary: Dashboard load time is slow
+          description: '95th percentile dashboard load time is above 5 seconds'
+        labels:
+          severity: warning
+          component: dashboard
+          team: platform
+
+      - uid: query-timeout
+        title: Query Timeout Rate
+        condition: A
+        data:
+          - refId: A
+            queryType: ''
+            model:
+              expr: 'rate(grafana_datasource_request_timeout_total[5m]) > 0.1'
+              interval: ''
+              refId: A
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: High rate of query timeouts
+          description: 'More than 10% of queries are timing out'
+        labels:
+          severity: warning
+          component: queries
+          team: platform
+
+  - name: Authentication & Access
+    interval: 1m
+    rules:
+      - uid: jwt-validation-failures
+        title: JWT Validation Failures
+        condition: A
+        data:
+          - refId: A
+            queryType: ''
+            model:
+              expr: 'rate(grafana_auth_jwt_validation_failed_total[5m]) > 0.05'
+              interval: ''
+              refId: A
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: High rate of JWT validation failures
+          description: 'More than 5% of JWT validations are failing'
+        labels:
+          severity: warning
+          component: authentication
+          team: security
+
+      - uid: unauthorized-access-attempts
+        title: Unauthorized Access Attempts
+        condition: A
+        data:
+          - refId: A
+            queryType: ''
+            model:
+              expr: 'rate(grafana_http_request_total{status_code="403"}[5m]) > 0.1'
+              interval: ''
+              refId: A
+        noDataState: NoData
+        execErrState: Alerting
+        for: 10m
+        annotations:
+          summary: High rate of unauthorized access attempts
+          description: 'Detecting suspicious activity with high 403 error rate'
+        labels:
+          severity: critical
+          component: security
+          team: security

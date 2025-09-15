@@ -25,6 +25,7 @@ import {
   MonitorHeartRounded,
   NotificationsRounded,
   DashboardRounded,
+  AnalyticsRounded,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTimeFilter } from '../contexts/TimeFilterContext';
@@ -35,7 +36,7 @@ import { HEALTH_STATUS_COLORS, HEALTH_STATUS_LABELS } from '../types';
 
 interface LayoutProps {
   children: React.ReactNode;
-  currentPage?: 'overview' | 'system-health';
+  currentPage?: 'overview' | 'system-health' | 'analytics';
 }
 
 export const Layout: React.FC<LayoutProps> = ({ 
@@ -115,6 +116,14 @@ export const Layout: React.FC<LayoutProps> = ({
                 variant={actualCurrentPage === 'overview' ? 'contained' : 'text'}
                 startIcon={<DashboardRounded />}
                 onClick={() => handleNavigate('overview')}
+                size="small"
+              >
+                Overview
+              </Button>
+              <Button
+                variant={actualCurrentPage === 'analytics' ? 'contained' : 'text'}
+                startIcon={<AnalyticsRounded />}
+                onClick={() => navigate('/analytics/grafana/')}
                 size="small"
               >
                 Analytics

@@ -1,0 +1,207 @@
+{
+  "expectations": [
+    {
+      "httpRequest": {
+        "method": "GET",
+        "path": "/api/v1/analytics/metrics/realtime"
+      },
+      "httpResponse": {
+        "statusCode": 200,
+        "headers": {
+          "Content-Type": ["application/json"]
+        },
+        "body": {
+          "timestamp": "2025-01-14T10:00:00Z",
+          "active_sessions": 142,
+          "sessions_last_hour": 523,
+          "conversions_last_hour": 12,
+          "revenue_last_hour": 4567.89,
+          "average_session_duration": 245,
+          "system_health_score": 95,
+          "cache_age_seconds": 5
+        }
+      }
+    },
+    {
+      "httpRequest": {
+        "method": "GET",
+        "path": "/api/v1/analytics/metrics/overview",
+        "queryStringParameters": {
+          "period": ["24h"]
+        }
+      },
+      "httpResponse": {
+        "statusCode": 200,
+        "headers": {
+          "Content-Type": ["application/json"]
+        },
+        "body": {
+          "period": "24h",
+          "property_id": "all",
+          "kpis": {
+            "total_sessions": 12345,
+            "unique_users": 8901,
+            "conversion_rate": 0.023,
+            "average_booking_value": 234.56,
+            "total_revenue": 45678.90,
+            "occupancy_rate": 0.78,
+            "revpar": 89.12
+          },
+          "comparison": {
+            "previous_period_change": 0.12,
+            "year_over_year_change": 0.23
+          },
+          "timestamp": "2025-01-14T10:00:00Z",
+          "cache_age_seconds": 60
+        }
+      }
+    },
+    {
+      "httpRequest": {
+        "method": "GET",
+        "path": "/api/v1/analytics/metrics/funnel"
+      },
+      "httpResponse": {
+        "statusCode": 200,
+        "headers": {
+          "Content-Type": ["application/json"]
+        },
+        "body": {
+          "funnel_id": "booking_funnel",
+          "period": "24h",
+          "stages": [
+            {
+              "name": "Search",
+              "stage_order": 1,
+              "count": 10000,
+              "rate": 1.0
+            },
+            {
+              "name": "Property View",
+              "stage_order": 2,
+              "count": 4500,
+              "rate": 0.45
+            },
+            {
+              "name": "Room Selection",
+              "stage_order": 3,
+              "count": 2000,
+              "rate": 0.20
+            },
+            {
+              "name": "Guest Details",
+              "stage_order": 4,
+              "count": 1500,
+              "rate": 0.15
+            },
+            {
+              "name": "Payment",
+              "stage_order": 5,
+              "count": 900,
+              "rate": 0.09
+            },
+            {
+              "name": "Confirmation",
+              "stage_order": 6,
+              "count": 234,
+              "rate": 0.023
+            }
+          ],
+          "timestamp": "2025-01-14T10:00:00Z",
+          "cache_age_seconds": 300
+        }
+      }
+    },
+    {
+      "httpRequest": {
+        "method": "GET",
+        "path": "/api/v1/analytics/metrics/top",
+        "queryStringParameters": {
+          "category": ["destinations"],
+          "metric": ["bookings"],
+          "limit": ["10"],
+          "period": ["7d"]
+        }
+      },
+      "httpResponse": {
+        "statusCode": 200,
+        "headers": {
+          "Content-Type": ["application/json"]
+        },
+        "body": {
+          "category": "destinations",
+          "metric": "bookings",
+          "period": "7d",
+          "items": [
+            {
+              "rank": 1,
+              "name": "Paris",
+              "value": 234,
+              "percentage_of_total": 0.15,
+              "change_from_previous": 0.12
+            },
+            {
+              "rank": 2,
+              "name": "London",
+              "value": 198,
+              "percentage_of_total": 0.13,
+              "change_from_previous": -0.05
+            },
+            {
+              "rank": 3,
+              "name": "New York",
+              "value": 156,
+              "percentage_of_total": 0.10,
+              "change_from_previous": 0.08
+            },
+            {
+              "rank": 4,
+              "name": "Tokyo",
+              "value": 134,
+              "percentage_of_total": 0.09,
+              "change_from_previous": 0.15
+            },
+            {
+              "rank": 5,
+              "name": "Dubai",
+              "value": 112,
+              "percentage_of_total": 0.07,
+              "change_from_previous": 0.22
+            }
+          ],
+          "total_value": 1560,
+          "timestamp": "2025-01-14T10:00:00Z",
+          "cache_age_seconds": 900
+        }
+      }
+    },
+    {
+      "httpRequest": {
+        "method": "GET",
+        "path": "/api/v1/analytics/properties"
+      },
+      "httpResponse": {
+        "statusCode": 200,
+        "headers": {
+          "Content-Type": ["application/json"]
+        },
+        "body": {
+          "properties": [
+            {
+              "id": "prop_001",
+              "name": "Grand Hotel Paris"
+            },
+            {
+              "id": "prop_002",
+              "name": "London Bridge Hotel"
+            },
+            {
+              "id": "prop_003",
+              "name": "Times Square Inn"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

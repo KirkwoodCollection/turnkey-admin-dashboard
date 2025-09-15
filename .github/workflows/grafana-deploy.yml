@@ -1,0 +1,227 @@
+name: Deploy Grafana to Production
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docker/grafana/**'
+      - 'terraform/**'
+      - '.github/workflows/grafana-deploy.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+
+env:
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_REGION: us-central1
+  GRAFANA_IMAGE: gcr.io/${{ secrets.GCP_PROJECT_ID }}/grafana
+
+jobs:
+  build-image:
+    name: Build Grafana Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Configure Docker for GCR
+        run: |
+          gcloud auth configure-docker
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            --platform linux/amd64 \
+            -t ${GRAFANA_IMAGE}:${GITHUB_SHA} \
+            -t ${GRAFANA_IMAGE}:latest \
+            -f docker/grafana/Dockerfile \
+            docker/grafana/
+
+      - name: Push Docker image
+        run: |
+          docker push ${GRAFANA_IMAGE}:${GITHUB_SHA}
+          docker push ${GRAFANA_IMAGE}:latest
+
+  deploy-terraform:
+    name: Deploy with Terraform
+    needs: build-image
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'production' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      - name: Terraform Init
+        working-directory: terraform
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="prefix=admin-dashboard/grafana"
+
+      - name: Terraform Plan
+        working-directory: terraform
+        run: |
+          terraform plan \
+            -var="project_id=${{ secrets.GCP_PROJECT_ID }}" \
+            -var="environment=${{ github.event.inputs.environment || 'production' }}" \
+            -var="grafana_image=${GRAFANA_IMAGE}:${GITHUB_SHA}" \
+            -var="grafana_admin_password=${{ secrets.GRAFANA_ADMIN_PASSWORD }}" \
+            -var="google_oauth_client_id=${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}" \
+            -var="google_oauth_client_secret=${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}" \
+            -var="allowed_domains=${{ secrets.ALLOWED_DOMAINS }}" \
+            -var="api_gateway_service_account=${{ secrets.API_GATEWAY_SERVICE_ACCOUNT }}" \
+            -out=tfplan
+
+      - name: Terraform Apply
+        working-directory: terraform
+        run: |
+          terraform apply -auto-approve tfplan
+
+      - name: Get Terraform Outputs
+        id: terraform
+        working-directory: terraform
+        run: |
+          echo "grafana_url=$(terraform output -raw grafana_url)" >> $GITHUB_OUTPUT
+          echo "service_name=$(terraform output -raw grafana_service_name)" >> $GITHUB_OUTPUT
+
+  update-api-gateway:
+    name: Update API Gateway
+    needs: deploy-terraform
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Update API Gateway Configuration
+        run: |
+          # Substitute variables in OpenAPI spec
+          sed -e "s|\${PROJECT_ID}|${{ secrets.GCP_PROJECT_ID }}|g" \
+              -e "s|\${GRAFANA_CLOUD_RUN_URL}|${{ needs.deploy-terraform.outputs.grafana_url }}|g" \
+              deployment/api-gateway/openapi-grafana.yaml > /tmp/openapi-grafana.yaml
+
+          # Create or update API config
+          gcloud api-gateway api-configs create grafana-config-${GITHUB_SHA:0:7} \
+            --api=turnkey-admin-api \
+            --openapi-spec=/tmp/openapi-grafana.yaml \
+            --project=${{ secrets.GCP_PROJECT_ID }} \
+            || echo "Config creation failed, may already exist"
+
+          # Update gateway
+          gcloud api-gateway gateways update turnkey-admin-gateway \
+            --api=turnkey-admin-api \
+            --api-config=grafana-config-${GITHUB_SHA:0:7} \
+            --location=${{ env.GCP_REGION }} \
+            --project=${{ secrets.GCP_PROJECT_ID }}
+
+  health-check:
+    name: Verify Deployment
+    needs: [deploy-terraform, update-api-gateway]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Wait for service to be ready
+        run: sleep 30
+
+      - name: Check Grafana Health
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${{ needs.deploy-terraform.outputs.grafana_url }}/api/health")
+
+          if [ "$response" = "200" ]; then
+            echo "✅ Grafana is healthy"
+          else
+            echo "❌ Grafana health check failed (HTTP $response)"
+            exit 1
+          fi
+
+      - name: Check Dashboard Availability
+        run: |
+          # This will require authentication in production
+          # For now, just check if the endpoint responds
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${{ needs.deploy-terraform.outputs.grafana_url }}/api/dashboards/uid/turnkey-main")
+
+          if [ "$response" = "200" ] || [ "$response" = "401" ]; then
+            echo "✅ Dashboard endpoint is responding"
+          else
+            echo "❌ Dashboard check failed (HTTP $response)"
+            exit 1
+          fi
+
+      - name: Notify Deployment Success
+        if: success()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "✅ Grafana deployed successfully to ${{ github.event.inputs.environment || 'production' }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "✅ *Grafana Deployment Successful*\n*Environment:* ${{ github.event.inputs.environment || 'production' }}\n*Version:* `${{ github.sha }}`\n*URL:* ${{ needs.deploy-terraform.outputs.grafana_url }}"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Notify Deployment Failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "❌ Grafana deployment failed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "❌ *Grafana Deployment Failed*\n*Environment:* ${{ github.event.inputs.environment || 'production' }}\n*Version:* `${{ github.sha }}`\n*Check the GitHub Actions logs for details*"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  grafana:
+    build:
+      context: docker/grafana
+      dockerfile: Dockerfile
+    container_name: turnkey-grafana-dev
+    ports:
+      - "3000:3000"
+    environment:
+      # Admin credentials
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+
+      # Disable auth for local development
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+
+      # Server configuration
+      - GF_SERVER_ROOT_URL=http://localhost:3000/
+      - GF_SERVER_SERVE_FROM_SUB_PATH=false
+
+      # Data source configuration
+      - GCP_PROJECT_ID=${GCP_PROJECT_ID:-your-project-id}
+      - ANALYTICS_API_URL=${ANALYTICS_API_URL:-http://host.docker.internal:8080/api/v1/analytics}
+
+      # Logging
+      - GF_LOG_MODE=console
+      - GF_LOG_LEVEL=debug
+
+    volumes:
+      # Mount dashboards for hot reload during development
+      - ./docker/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+
+      # Persist Grafana data
+      - grafana-storage:/var/lib/grafana
+
+    networks:
+      - turnkey-network
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Optional: Mock Analytics API for development
+  mock-analytics:
+    image: mockserver/mockserver:latest
+    container_name: turnkey-mock-analytics
+    ports:
+      - "8080:1080"
+    environment:
+      - MOCKSERVER_LOG_LEVEL=INFO
+      - MOCKSERVER_INITIALIZATION_JSON_PATH=/config/expectations.json
+    volumes:
+      - ./tests/mocks/analytics-api.json:/config/expectations.json:ro
+    networks:
+      - turnkey-network
+
+volumes:
+  grafana-storage:
+
+networks:
+  turnkey-network:
+    driver: bridge

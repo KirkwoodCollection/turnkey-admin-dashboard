@@ -1,0 +1,200 @@
+swagger: "2.0"
+info:
+  title: TurnkeyHMS Admin Dashboard API with Grafana
+  description: API Gateway configuration for Admin Dashboard including Grafana integration
+  version: "1.0.0"
+
+host: admin.turnkeyhms.com
+schemes:
+  - https
+produces:
+  - application/json
+
+securityDefinitions:
+  firebase:
+    authorizationUrl: ""
+    flow: "implicit"
+    type: "oauth2"
+    x-google-issuer: "https://securetoken.google.com/${PROJECT_ID}"
+    x-google-jwks_uri: "https://www.googleapis.com/service_accounts/v1/metadata/x509/securetoken@system.gserviceaccount.com"
+    x-google-audiences: "${PROJECT_ID}"
+
+paths:
+  /analytics/grafana:
+    get:
+      summary: Grafana Analytics Dashboard Root
+      operationId: grafanaRoot
+      security:
+        - firebase: []
+      x-google-backend:
+        address: ${GRAFANA_CLOUD_RUN_URL}
+        path_translation: APPEND_PATH_TO_ADDRESS
+        jwt_audience: ${GRAFANA_CLOUD_RUN_URL}
+      x-google-management:
+        jwt-header-mappings:
+          - header: "X-JWT-Assertion"
+            jwt-claim: "ORIGINAL_AUTH_HEADER"
+      responses:
+        "200":
+          description: Grafana dashboard HTML
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
+  /analytics/grafana/{proxy}:
+    get:
+      summary: Grafana Analytics Dashboard Proxy
+      operationId: grafanaProxy
+      security:
+        - firebase: []
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          type: string
+          description: Path to proxy to Grafana
+      x-google-backend:
+        address: ${GRAFANA_CLOUD_RUN_URL}
+        path_translation: APPEND_PATH_TO_ADDRESS
+        jwt_audience: ${GRAFANA_CLOUD_RUN_URL}
+        deadline: 60.0
+      x-google-management:
+        jwt-header-mappings:
+          - header: "X-JWT-Assertion"
+            jwt-claim: "ORIGINAL_AUTH_HEADER"
+      responses:
+        "200":
+          description: Proxied response from Grafana
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
+  /analytics/grafana/{proxy+}:
+    get:
+      summary: Grafana Deep Path Proxy
+      operationId: grafanaDeepProxy
+      security:
+        - firebase: []
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          type: string
+          description: Deep path to proxy to Grafana
+      x-google-backend:
+        address: ${GRAFANA_CLOUD_RUN_URL}
+        path_translation: APPEND_PATH_TO_ADDRESS
+        jwt_audience: ${GRAFANA_CLOUD_RUN_URL}
+        deadline: 60.0
+      x-google-management:
+        jwt-header-mappings:
+          - header: "X-JWT-Assertion"
+            jwt-claim: "ORIGINAL_AUTH_HEADER"
+      responses:
+        "200":
+          description: Proxied response from Grafana
+    post:
+      summary: Grafana POST requests
+      operationId: grafanaPost
+      security:
+        - firebase: []
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          type: string
+          description: Path for POST requests
+      x-google-backend:
+        address: ${GRAFANA_CLOUD_RUN_URL}
+        path_translation: APPEND_PATH_TO_ADDRESS
+        jwt_audience: ${GRAFANA_CLOUD_RUN_URL}
+        deadline: 60.0
+      x-google-management:
+        jwt-header-mappings:
+          - header: "X-JWT-Assertion"
+            jwt-claim: "ORIGINAL_AUTH_HEADER"
+      responses:
+        "200":
+          description: Successful POST response
+    put:
+      summary: Grafana PUT requests
+      operationId: grafanaPut
+      security:
+        - firebase: []
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          type: string
+      x-google-backend:
+        address: ${GRAFANA_CLOUD_RUN_URL}
+        path_translation: APPEND_PATH_TO_ADDRESS
+        jwt_audience: ${GRAFANA_CLOUD_RUN_URL}
+        deadline: 60.0
+      x-google-management:
+        jwt-header-mappings:
+          - header: "X-JWT-Assertion"
+            jwt-claim: "ORIGINAL_AUTH_HEADER"
+      responses:
+        "200":
+          description: Successful PUT response
+    delete:
+      summary: Grafana DELETE requests
+      operationId: grafanaDelete
+      security:
+        - firebase: []
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          type: string
+      x-google-backend:
+        address: ${GRAFANA_CLOUD_RUN_URL}
+        path_translation: APPEND_PATH_TO_ADDRESS
+        jwt_audience: ${GRAFANA_CLOUD_RUN_URL}
+        deadline: 60.0
+      x-google-management:
+        jwt-header-mappings:
+          - header: "X-JWT-Assertion"
+            jwt-claim: "ORIGINAL_AUTH_HEADER"
+      responses:
+        "200":
+          description: Successful DELETE response
+    options:
+      summary: Grafana OPTIONS requests (CORS)
+      operationId: grafanaOptions
+      security: []
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          type: string
+      x-google-backend:
+        address: ${GRAFANA_CLOUD_RUN_URL}
+        path_translation: APPEND_PATH_TO_ADDRESS
+        jwt_audience: ${GRAFANA_CLOUD_RUN_URL}
+      responses:
+        "200":
+          description: CORS preflight response
+
+x-google-management:
+  metrics:
+    - name: "grafana-requests"
+      displayName: "Grafana Requests"
+      description: "Number of requests to Grafana"
+      metricKind: DELTA
+      valueType: INT64
+    - name: "grafana-errors"
+      displayName: "Grafana Errors"
+      description: "Number of errors from Grafana"
+      metricKind: DELTA
+      valueType: INT64
+  quota:
+    limits:
+      - name: "grafana-limit"
+        metric: "grafana-requests"
+        unit: "1/min/{project}"
+        values:
+          STANDARD: 1000

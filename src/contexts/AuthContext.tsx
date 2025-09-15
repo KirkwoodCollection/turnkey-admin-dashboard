@@ -8,6 +8,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   refreshToken: () => Promise<void>;
+  getIdToken: () => Promise<string>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -99,6 +100,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const getIdToken = async (): Promise<string> => {
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        throw new Error('No auth token available');
+      }
+
+      // Check if token needs refresh (simplified check)
+      // In production, decode JWT and check expiry
+      const tokenAge = Date.now() - (user?.lastLogin?.getTime() || 0);
+      const ONE_HOUR = 60 * 60 * 1000;
+
+      if (tokenAge > ONE_HOUR) {
+        await refreshToken();
+        return localStorage.getItem('authToken') || '';
+      }
+
+      return token;
+    } catch (error) {
+      console.error('Error getting ID token:', error);
+      throw error;
+    }
+  };
+
   const contextValue: AuthContextType = {
     user,
     isAuthenticated: !!user,
@@ -106,6 +131,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     logout,
     refreshToken,
+    getIdToken,
   };
 
   return (
