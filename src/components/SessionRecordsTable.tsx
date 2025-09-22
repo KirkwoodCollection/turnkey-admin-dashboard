@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -29,23 +29,70 @@ import {
 } from '@mui/icons-material';
 import { Session, SESSION_STATUS_COLORS } from '../types';
 import { format } from 'date-fns';
+import { useEventsWebSocket } from '../hooks/useEventsWebSocket';
+import { useActiveSessions } from '../hooks/useEventsApi';
 
 interface SessionRecordsTableProps {
-  sessions: Session[];
+  sessions?: Session[];
   loading?: boolean;
   onSessionClick?: (session: Session) => void;
   title?: string;
+  useRealtime?: boolean;
+  propertyId?: string;
 }
 
 export const SessionRecordsTable: React.FC<SessionRecordsTableProps> = ({
-  sessions,
-  loading = false,
+  sessions: propSessions,
+  loading: propLoading = false,
   onSessionClick,
-  title = "Session Records"
+  title = "Session Records",
+  useRealtime = false,
+  propertyId
 }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
+  const [localSessions, setLocalSessions] = useState<Session[]>([]);
+
+  // Fetch real-time sessions if enabled
+  const { data: realtimeSessions, isLoading: realtimeLoading } = useActiveSessions(
+    useRealtime ? propertyId : undefined
+  );
+
+  // WebSocket connection for real-time updates
+  const { isConnected } = useEventsWebSocket({
+    propertyId,
+    onSessionUpdate: useRealtime ? (updatedSession) => {
+      setLocalSessions(prev => {
+        const index = prev.findIndex(s => s.sessionId === updatedSession.sessionId);
+        if (index >= 0) {
+          const updated = [...prev];
+          updated[index] = updatedSession;
+          return updated;
+        } else {
+          // New session, add to beginning
+          return [updatedSession, ...prev];
+        }
+      });
+    } : undefined,
+  });
+
+  // Determine which sessions to display
+  const sessions = useMemo(() => {
+    if (useRealtime && realtimeSessions) {
+      return localSessions.length > 0 ? localSessions : realtimeSessions;
+    }
+    return propSessions || [];
+  }, [useRealtime, realtimeSessions, localSessions, propSessions]);
+
+  const loading = useRealtime ? realtimeLoading : propLoading;
+
+  // Update local sessions when real-time data changes
+  useEffect(() => {
+    if (useRealtime && realtimeSessions) {
+      setLocalSessions(realtimeSessions);
+    }
+  }, [useRealtime, realtimeSessions]);
 
   // Filter sessions based on search term
   const filteredSessions = sessions.filter(session => 
@@ -105,9 +152,20 @@ export const SessionRecordsTable: React.FC<SessionRecordsTableProps> = ({
     <Card>
       <CardContent>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h6">
-            {title}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Typography variant="h6">
+              {title}
+            </Typography>
+            {useRealtime && (
+              <Chip
+                icon={<FiberManualRecord sx={{ fontSize: 10 }} />}
+                label={isConnected ? 'Live' : 'Offline'}
+                color={isConnected ? 'success' : 'default'}
+                size="small"
+                variant="outlined"
+              />
+            )}
+          </Box>
           <TextField
             size="small"
             placeholder="Search sessions..."
