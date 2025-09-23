@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { eventsApi } from '../services/eventsApi';
 import { Session, Event, EventType } from '../types';
 

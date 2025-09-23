@@ -4,12 +4,6 @@ import {
   Card,
   CardContent,
   Typography,
-  Timeline,
-  TimelineItem,
-  TimelineContent,
-  TimelineDot,
-  TimelineSeparator,
-  TimelineConnector,
   Tooltip,
   Stack,
   Chip,
@@ -25,6 +19,14 @@ import {
   Grid,
   Alert,
 } from '@mui/material';
+import {
+  Timeline,
+  TimelineItem,
+  TimelineContent,
+  TimelineDot,
+  TimelineSeparator,
+  TimelineConnector,
+} from '@mui/lab';
 import {
   ExpandMoreRounded,
   ExpandLessRounded,

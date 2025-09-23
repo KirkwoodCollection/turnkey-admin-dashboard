@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from 'react';
-import { useQueryClient } from 'react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useWebSocket } from './useWebSocket';
 import {
   EventsWebSocketMessage,

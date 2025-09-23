@@ -11,6 +11,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { HealthProvider } from './contexts/HealthContext';
 import { Overview } from './pages/Overview';
 import { SystemHealthDashboard } from './pages/SystemHealth';
+import { AnalyticsDashboard } from './pages/AnalyticsDashboard';
 import { GrafanaRedirect } from './components/GrafanaRedirect';
 
 // Create React Query client
@@ -102,7 +103,11 @@ function App() {
                   <HealthProvider>
                     <TimeFilterProvider>
                       <Routes>
-                        <Route path="/" element={<Navigate to="/overview" replace />} />
+                        <Route path="/" element={
+                          <Layout currentPage="analytics">
+                            <AnalyticsDashboard />
+                          </Layout>
+                        } />
                         <Route path="/overview" element={
                           <Layout currentPage="overview">
                             <Overview />
@@ -113,8 +118,13 @@ function App() {
                             <SystemHealthDashboard />
                           </Layout>
                         } />
+                        <Route path="/analytics" element={
+                          <Layout currentPage="analytics">
+                            <AnalyticsDashboard />
+                          </Layout>
+                        } />
                         <Route path="/analytics/grafana/*" element={<GrafanaRedirect />} />
-                        <Route path="*" element={<Navigate to="/overview" replace />} />
+                        <Route path="*" element={<Navigate to="/" replace />} />
                       </Routes>
                     </TimeFilterProvider>
                   </HealthProvider>

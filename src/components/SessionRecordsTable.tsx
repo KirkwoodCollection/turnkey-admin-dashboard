@@ -31,6 +31,8 @@ import { Session, SESSION_STATUS_COLORS } from '../types';
 import { format } from 'date-fns';
 import { useEventsWebSocket } from '../hooks/useEventsWebSocket';
 import { useActiveSessions } from '../hooks/useEventsApi';
+import { useAnalyticsSessions } from '../hooks/useAnalyticsData';
+import { TimeRange } from '../services/analyticsApi';
 
 interface SessionRecordsTableProps {
   sessions?: Session[];
@@ -38,6 +40,8 @@ interface SessionRecordsTableProps {
   onSessionClick?: (session: Session) => void;
   title?: string;
   useRealtime?: boolean;
+  useAnalytics?: boolean;
+  timeRange?: TimeRange;
   propertyId?: string;
 }
 
@@ -47,6 +51,8 @@ export const SessionRecordsTable: React.FC<SessionRecordsTableProps> = ({
   onSessionClick,
   title = "Session Records",
   useRealtime = false,
+  useAnalytics = false,
+  timeRange = '24h',
   propertyId
 }) => {
   const [page, setPage] = useState(0);
@@ -57,6 +63,14 @@ export const SessionRecordsTable: React.FC<SessionRecordsTableProps> = ({
   // Fetch real-time sessions if enabled
   const { data: realtimeSessions, isLoading: realtimeLoading } = useActiveSessions(
     useRealtime ? propertyId : undefined
+  );
+
+  // Fetch Analytics sessions if enabled
+  const { data: analyticsData, isLoading: analyticsLoading } = useAnalyticsSessions(
+    useAnalytics ? timeRange : '24h',
+    rowsPerPage,
+    page * rowsPerPage,
+    useAnalytics ? propertyId : undefined
   );
 
   // WebSocket connection for real-time updates
@@ -79,13 +93,16 @@ export const SessionRecordsTable: React.FC<SessionRecordsTableProps> = ({
 
   // Determine which sessions to display
   const sessions = useMemo(() => {
+    if (useAnalytics && analyticsData) {
+      return analyticsData.sessions || [];
+    }
     if (useRealtime && realtimeSessions) {
       return localSessions.length > 0 ? localSessions : realtimeSessions;
     }
     return propSessions || [];
-  }, [useRealtime, realtimeSessions, localSessions, propSessions]);
+  }, [useAnalytics, analyticsData, useRealtime, realtimeSessions, localSessions, propSessions]);
 
-  const loading = useRealtime ? realtimeLoading : propLoading;
+  const loading = useAnalytics ? analyticsLoading : (useRealtime ? realtimeLoading : propLoading);
 
   // Update local sessions when real-time data changes
   useEffect(() => {

@@ -62,11 +62,13 @@ Admin Dashboard → Display KPIs, funnels, heatmaps
 ## API Endpoints
 
 ### Consumed Analytics Endpoints
-- `GET /api/v1/analytics/metrics/overview` - KPIs and totals
-- `GET /api/v1/analytics/metrics/funnel` - Funnel stage analysis
-- `GET /api/v1/analytics/metrics/heatmap` - 2D heatmap data
-- `GET /api/v1/analytics/metrics/top` - Top lists (destinations, hotels)
-- `GET /api/v1/analytics/metrics/realtime` - Live metrics
+- `GET /api/v1/metrics/overview` - KPIs and totals
+- `GET /api/v1/metrics/funnel` - Funnel stage analysis
+- `GET /api/v1/metrics/realtime` - Live metrics
+- `GET /api/v1/metrics/sessions/duration` - Session engagement metrics
+- `GET /api/v1/metrics/hourly` - Time-series data
+- `GET /api/v1/analytics/heatmap` - 2D heatmap data (pending documentation)
+- `GET /api/v1/metrics/top/*` - Top lists (pending documentation)
 
 ### Exposed Admin Endpoints
 - `GET /api/v1/admin/preferences` - User preferences
@@ -293,7 +295,13 @@ ws.on('session.updated', (data) => updateUI(data));
 - Offline mode with sync
 - Advanced state management
 
+## Integration Guides
+
+### External Service Integration
+- [Analytics API Integration](./docs/integration/ANALYTICS_API_INTEGRATION.md) - Complete Analytics service integration guide with API contracts, WebSocket patterns, and error handling
+
 ## Related Documentation
-- [SERVICE_BOUNDARIES.md](./SERVICE_BOUNDARIES.md) - Detailed boundary definitions
-- [ADMIN_DASHBOARD_SCOPE.md](./ADMIN_DASHBOARD_SCOPE.md) - Service scope
+- [SERVICE_BOUNDARIES.md](./docs/SERVICE_BOUNDARIES.md) - Detailed boundary definitions
+- [ADMIN_DASHBOARD_SCOPE.md](./docs/ADMIN_DASHBOARD_SCOPE.md) - Service scope
+- [DEPLOYMENT_GUIDE.md](./docs/DEPLOYMENT_GUIDE.md) - Deployment instructions
 - Analytics Service CLAUDE.md - Analytics boundaries
