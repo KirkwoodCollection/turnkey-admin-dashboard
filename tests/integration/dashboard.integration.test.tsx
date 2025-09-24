@@ -1,30 +1,30 @@
 import { render, screen, waitFor, fireEvent } from '../setup/testUtils';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
-import Dashboard from '../../src/pages/Dashboard';
+import AnalyticsDashboard from '../../src/pages/AnalyticsDashboard';
 import { WebSocketProvider } from '../../src/contexts/WebSocketContext';
 import { TimeFilterProvider } from '../../src/contexts/TimeFilterContext';
 import { setupMockServer, teardownMockServer } from '../mocks/mockServer';
-import { mockDashboardMetrics, mockSessions } from '../fixtures/mockData';
+import { mockAnalyticsDashboardMetrics, mockSessions } from '../fixtures/mockData';
 
 // Mock Service Worker setup
 import { setupServer } from 'msw/node';
-import { rest } from 'msw';
+import { http } from 'msw';
 
 const handlers = [
-  rest.get('/api/v1/analytics/dashboard', (req, res, ctx) => {
-    return res(ctx.json(mockDashboardMetrics));
+  http.get('/api/v1/analytics/dashboard', () => {
+    return Response.json(mockAnalyticsDashboardMetrics);
   }),
-  rest.get('/api/v1/analytics/sessions', (req, res, ctx) => {
-    return res(ctx.json({
+  http.get('/api/v1/analytics/sessions', () => {
+    return Response.json({
       sessions: mockSessions,
       total: mockSessions.length,
       page: 1,
       limit: 10,
-    }));
+    });
   }),
-  rest.get('/health', (req, res, ctx) => {
-    return res(ctx.json({ status: 'healthy' }));
+  http.get('/health', () => {
+    return Response.json({ status: 'healthy' });
   }),
 ];
 
@@ -88,7 +88,7 @@ const createTestWrapper = () => {
   );
 };
 
-describe('Dashboard Integration Tests', () => {
+describe('AnalyticsDashboard Integration Tests', () => {
   beforeAll(() => {
     mockServer.listen({ onUnhandledRequest: 'error' });
   });
@@ -109,7 +109,7 @@ describe('Dashboard Integration Tests', () => {
   it('loads and displays dashboard with all components', async () => {
     const TestWrapper = createTestWrapper();
     
-    render(<Dashboard />, { wrapper: TestWrapper });
+    render(<AnalyticsDashboard />, { wrapper: TestWrapper });
 
     // Wait for loading to complete
     await waitFor(() => {
@@ -117,7 +117,7 @@ describe('Dashboard Integration Tests', () => {
     });
 
     // Verify main dashboard components are rendered
-    expect(screen.getByText('Dashboard Overview')).toBeInTheDocument();
+    expect(screen.getByText('AnalyticsDashboard Overview')).toBeInTheDocument();
     
     // Check TopStatsPanel
     expect(screen.getByText('Active Users')).toBeInTheDocument();
@@ -142,7 +142,7 @@ describe('Dashboard Integration Tests', () => {
   it('handles time filter changes across all components', async () => {
     const TestWrapper = createTestWrapper();
     
-    render(<Dashboard />, { wrapper: TestWrapper });
+    render(<AnalyticsDashboard />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.queryByTestId('dashboard-loading')).not.toBeInTheDocument();
@@ -167,7 +167,7 @@ describe('Dashboard Integration Tests', () => {
   it('handles real-time WebSocket updates', async () => {
     const TestWrapper = createTestWrapper();
     
-    render(<Dashboard />, { wrapper: TestWrapper });
+    render(<AnalyticsDashboard />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.queryByTestId('dashboard-loading')).not.toBeInTheDocument();
@@ -177,7 +177,7 @@ describe('Dashboard Integration Tests', () => {
     const liveUpdate = {
       type: 'METRICS_UPDATE',
       payload: {
-        ...mockDashboardMetrics,
+        ...mockAnalyticsDashboardMetrics,
         activeUsers: 55, // Updated value
       },
       timestamp: new Date().toISOString(),
@@ -197,7 +197,7 @@ describe('Dashboard Integration Tests', () => {
   it('handles session updates in real-time', async () => {
     const TestWrapper = createTestWrapper();
     
-    render(<Dashboard />, { wrapper: TestWrapper });
+    render(<AnalyticsDashboard />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.queryByTestId('dashboard-loading')).not.toBeInTheDocument();
@@ -232,14 +232,14 @@ describe('Dashboard Integration Tests', () => {
   it('handles API errors gracefully', async () => {
     // Mock API error
     mockServer.use(
-      rest.get('/api/v1/analytics/dashboard', (req, res, ctx) => {
+      http.get('/api/v1/analytics/dashboard', (req, res, ctx) => {
         return res(ctx.status(500), ctx.json({ message: 'Internal server error' }));
       })
     );
 
     const TestWrapper = createTestWrapper();
     
-    render(<Dashboard />, { wrapper: TestWrapper });
+    render(<AnalyticsDashboard />, { wrapper: TestWrapper });
 
     // Error state should be displayed
     await waitFor(() => {
@@ -253,7 +253,7 @@ describe('Dashboard Integration Tests', () => {
   it('handles network disconnection and reconnection', async () => {
     const TestWrapper = createTestWrapper();
     
-    render(<Dashboard />, { wrapper: TestWrapper });
+    render(<AnalyticsDashboard />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.queryByTestId('dashboard-loading')).not.toBeInTheDocument();
@@ -288,7 +288,7 @@ describe('Dashboard Integration Tests', () => {
   it('handles component interaction workflows', async () => {
     const TestWrapper = createTestWrapper();
     
-    render(<Dashboard />, { wrapper: TestWrapper });
+    render(<AnalyticsDashboard />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.queryByTestId('dashboard-loading')).not.toBeInTheDocument();
@@ -310,7 +310,7 @@ describe('Dashboard Integration Tests', () => {
     }));
 
     mockServer.use(
-      rest.get('/api/v1/analytics/sessions', (req, res, ctx) => {
+      http.get('/api/v1/analytics/sessions', (req, res, ctx) => {
         return res(ctx.json({
           sessions: largeSessions,
           total: largeSessions.length,
@@ -323,7 +323,7 @@ describe('Dashboard Integration Tests', () => {
     const TestWrapper = createTestWrapper();
     
     const startTime = Date.now();
-    render(<Dashboard />, { wrapper: TestWrapper });
+    render(<AnalyticsDashboard />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.queryByTestId('dashboard-loading')).not.toBeInTheDocument();
@@ -342,7 +342,7 @@ describe('Dashboard Integration Tests', () => {
   it('handles concurrent data updates', async () => {
     const TestWrapper = createTestWrapper();
     
-    render(<Dashboard />, { wrapper: TestWrapper });
+    render(<AnalyticsDashboard />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.queryByTestId('dashboard-loading')).not.toBeInTheDocument();
@@ -352,7 +352,7 @@ describe('Dashboard Integration Tests', () => {
     const updates = [
       {
         type: 'METRICS_UPDATE',
-        payload: { ...mockDashboardMetrics, activeUsers: 60 },
+        payload: { ...mockAnalyticsDashboardMetrics, activeUsers: 60 },
         timestamp: new Date().toISOString(),
       },
       {
@@ -381,7 +381,7 @@ describe('Dashboard Integration Tests', () => {
   it('preserves user interactions during data updates', async () => {
     const TestWrapper = createTestWrapper();
     
-    render(<Dashboard />, { wrapper: TestWrapper });
+    render(<AnalyticsDashboard />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.queryByTestId('dashboard-loading')).not.toBeInTheDocument();
@@ -397,7 +397,7 @@ describe('Dashboard Integration Tests', () => {
     // Simulate data update while dropdown is open
     MockWebSocket.simulateMessage({
       type: 'METRICS_UPDATE',
-      payload: { ...mockDashboardMetrics, activeUsers: 70 },
+      payload: { ...mockAnalyticsDashboardMetrics, activeUsers: 70 },
       timestamp: new Date().toISOString(),
     });
 
@@ -418,7 +418,7 @@ describe('Dashboard Integration Tests', () => {
       value: 375,
     });
 
-    render(<Dashboard />, { wrapper: TestWrapper });
+    render(<AnalyticsDashboard />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.queryByTestId('dashboard-loading')).not.toBeInTheDocument();

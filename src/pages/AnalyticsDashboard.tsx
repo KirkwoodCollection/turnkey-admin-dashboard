@@ -291,3 +291,5 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
     </Container>
   );
 };
+
+export default AnalyticsDashboard;

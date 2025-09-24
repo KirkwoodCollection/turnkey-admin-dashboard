@@ -78,6 +78,11 @@ const localStorageMock = {
 (global as any).localStorage = localStorageMock;
 (global as any).sessionStorage = localStorageMock;
 
+// Ensure window object exists in all test environments
+if (typeof window === 'undefined') {
+  (global as any).window = {};
+}
+
 // Mock window.location
 delete (window as any).location;
 (window as any).location = {

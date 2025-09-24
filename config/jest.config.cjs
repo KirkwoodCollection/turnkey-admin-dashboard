@@ -34,7 +34,25 @@ module.exports = {
   ],
   transform: {
     '^.+\\.(ts|tsx)$': ['ts-jest', {
-      tsconfig: 'tsconfig.test.json'
+      tsconfig: {
+        compilerOptions: {
+          target: 'es2018',
+          lib: ['es2018', 'dom'],
+          allowJs: true,
+          skipLibCheck: true,
+          esModuleInterop: true,
+          allowSyntheticDefaultImports: true,
+          strict: true,
+          forceConsistentCasingInFileNames: true,
+          moduleResolution: 'node',
+          resolveJsonModule: true,
+          isolatedModules: true,
+          noEmit: true,
+          jsx: 'react-jsx',
+          module: 'commonjs',
+          types: ['jest', '@testing-library/jest-dom', 'node']
+        }
+      }
     }]
   },
   testTimeout: 10000

@@ -11,9 +11,7 @@ jest.mock('../../src/contexts/AuthContext', () => ({
   useAuth: jest.fn(),
 }));
 
-// Mock window.location.href
-delete (window as any).location;
-window.location = { href: '' } as any;
+// Window and location are mocked in setupTests.ts
 
 describe('Grafana Integration', () => {
   const mockGetIdToken = jest.fn();

@@ -1,3 +1,4 @@
+import React from 'react';
 import { renderHook, act, waitFor } from '../setup/testUtils';
 import { useWebSocket } from '../../src/hooks/useWebSocket';
 import { useLiveEvents } from '../../src/hooks/useLiveEvents';
