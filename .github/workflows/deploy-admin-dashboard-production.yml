@@ -155,7 +155,7 @@ jobs:
             --cpu 1 \
             --timeout 60 \
             --concurrency 1000 \
-            --service-account admin-dashboard-sa@${{ secrets.GCP_PROJECT }}.iam.gserviceaccount.com \
+            --service-account turnkey-admin-api-prod@${{ secrets.GCP_PROJECT }}.iam.gserviceaccount.com \
             --labels version=${{ needs.build.outputs.version }},service=admin-dashboard,env=production \
             --update-env-vars NODE_ENV=production \
             --no-allow-unauthenticated
