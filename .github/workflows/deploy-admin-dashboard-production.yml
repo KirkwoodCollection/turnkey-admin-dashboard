@@ -29,28 +29,28 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: TurnkeyHMS-workspace/turnkey-admin-dashboard/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        working-directory: ./TurnkeyHMS-workspace/turnkey-admin-dashboard
+        working-directory: .
         run: npm ci
 
       - name: Run linting
-        working-directory: ./TurnkeyHMS-workspace/turnkey-admin-dashboard
+        working-directory: .
         run: npm run lint
 
       - name: Run type checking
-        working-directory: ./TurnkeyHMS-workspace/turnkey-admin-dashboard
+        working-directory: .
         run: npm run type-check
 
       - name: Run unit tests
-        working-directory: ./TurnkeyHMS-workspace/turnkey-admin-dashboard
+        working-directory: .
         run: npm run test:unit -- --coverage
 
       - name: Upload coverage
         uses: codecov/codecov-action@v3
         with:
-          files: ./TurnkeyHMS-workspace/turnkey-admin-dashboard/coverage/lcov.info
+          files: ./coverage/lcov.info
           flags: admin-dashboard
 
   build:
@@ -66,18 +66,18 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: TurnkeyHMS-workspace/turnkey-admin-dashboard/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Generate version
         id: version
         run: echo "version=${GITHUB_SHA::8}-$(date +%Y%m%d%H%M%S)" >> $GITHUB_OUTPUT
 
       - name: Install dependencies
-        working-directory: ./TurnkeyHMS-workspace/turnkey-admin-dashboard
+        working-directory: .
         run: npm ci
 
       - name: Build application
-        working-directory: ./TurnkeyHMS-workspace/turnkey-admin-dashboard
+        working-directory: .
         env:
           VITE_API_BASE_URL: https://api.turnkeyhms.com
           VITE_WS_URL: wss://api.turnkeyhms.com
@@ -92,7 +92,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: build-${{ steps.version.outputs.version }}
-          path: TurnkeyHMS-workspace/turnkey-admin-dashboard/dist/
+          path: dist/
           retention-days: 7
 
   deploy-cdn:
@@ -157,7 +157,7 @@ jobs:
         run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev
 
       - name: Build and push Docker image
-        working-directory: ./TurnkeyHMS-workspace/turnkey-admin-dashboard
+        working-directory: .
         run: |
           docker build \
             --build-arg VITE_API_BASE_URL=https://api.turnkeyhms.com \
@@ -201,14 +201,14 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: TurnkeyHMS-workspace/turnkey-admin-dashboard/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        working-directory: ./TurnkeyHMS-workspace/turnkey-admin-dashboard
+        working-directory: .
         run: npm ci
 
       - name: Run integration tests
-        working-directory: ./TurnkeyHMS-workspace/turnkey-admin-dashboard
+        working-directory: .
         run: npm run test:integration
         env:
           TEST_URL: https://admin.turnkeyhms.com
