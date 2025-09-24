@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom';
+import './jest-setup';  // Import the JS setup file to ensure jsdom is initialized
 
 // Mock Service Worker setup is optional for unit tests
 // If using MSW, uncomment and import { server } from '../mocks/server';
@@ -29,43 +30,40 @@ process.env.VITE_WS_URL = 'ws://localhost:3003';
   }
 };
 
-// Mock ResizeObserver
-global.ResizeObserver = jest.fn().mockImplementation(() => ({
-  observe: jest.fn(),
-  unobserve: jest.fn(),
-  disconnect: jest.fn(),
-}));
+// Mock WebSocket - using class-based implementation for better compatibility
+class MockWebSocket {
+  static CONNECTING = 0;
+  static OPEN = 1;
+  static CLOSING = 2;
+  static CLOSED = 3;
 
-// Mock IntersectionObserver
-global.IntersectionObserver = jest.fn().mockImplementation(() => ({
-  observe: jest.fn(),
-  unobserve: jest.fn(),
-  disconnect: jest.fn(),
-}));
+  CONNECTING = 0;
+  OPEN = 1;
+  CLOSING = 2;
+  CLOSED = 3;
+  readyState = MockWebSocket.CONNECTING;
 
-// Mock scrollIntoView
-Element.prototype.scrollIntoView = jest.fn();
+  close = jest.fn();
+  send = jest.fn();
+  addEventListener = jest.fn();
+  removeEventListener = jest.fn();
 
-// Mock WebSocket
-(global as any).WebSocket = jest.fn().mockImplementation(() => ({
-  close: jest.fn(),
-  send: jest.fn(),
-  addEventListener: jest.fn(),
-  removeEventListener: jest.fn(),
-  readyState: 0, // CONNECTING
-  CONNECTING: 0,
-  OPEN: 1,
-  CLOSING: 2,
-  CLOSED: 3,
-}));
+  constructor(url: string) {
+    // Store URL for debugging purposes
+    this.url = url;
+    this.readyState = MockWebSocket.CONNECTING;
+    // Simulate connection opening
+    setTimeout(() => {
+      this.readyState = MockWebSocket.OPEN;
+    }, 0);
+  }
 
-// Set static properties
-(global.WebSocket as any).CONNECTING = 0;
-(global.WebSocket as any).OPEN = 1;
-(global.WebSocket as any).CLOSING = 2;
-(global.WebSocket as any).CLOSED = 3;
+  url: string;
+}
 
-// Mock localStorage
+(global as any).WebSocket = MockWebSocket;
+
+// Mock localStorage and sessionStorage
 const localStorageMock = {
   getItem: jest.fn(),
   setItem: jest.fn(),
@@ -78,31 +76,36 @@ const localStorageMock = {
 (global as any).localStorage = localStorageMock;
 (global as any).sessionStorage = localStorageMock;
 
-// Ensure window object exists in all test environments
-if (typeof window === 'undefined') {
-  (global as any).window = {};
-}
-
-// Mock window.location
-delete (window as any).location;
-(window as any).location = {
-  href: 'http://localhost:3000',
-  origin: 'http://localhost:3000',
-  protocol: 'http:',
-  host: 'localhost:3000',
-  hostname: 'localhost',
-  port: '3000',
-  pathname: '/',
-  search: '',
-  hash: '',
-  reload: jest.fn(),
-  replace: jest.fn(),
-  assign: jest.fn(),
-};
+// Safe window.location mock (window should exist from jest-setup.js)
+Object.defineProperty(window, 'location', {
+  writable: true,
+  value: {
+    href: 'http://localhost:3000',
+    origin: 'http://localhost:3000',
+    protocol: 'http:',
+    host: 'localhost:3000',
+    hostname: 'localhost',
+    port: '3000',
+    pathname: '/',
+    search: '',
+    hash: '',
+    reload: jest.fn(),
+    replace: jest.fn(),
+    assign: jest.fn()
+  }
+});
 
 // Mock console methods in test environment
+const originalWarn = console.warn;
+const originalError = console.error;
 console.warn = jest.fn();
 console.error = jest.fn();
+
+// Restore console methods after all tests (cleanup)
+afterAll(() => {
+  console.warn = originalWarn;
+  console.error = originalError;
+});
 
 // Mock plotly.js
 jest.mock('plotly.js', () => ({
