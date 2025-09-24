@@ -12,10 +12,10 @@ export const sessionsApi = {
    * Get session timeline/journey for a specific session
    */
   async getSessionTimeline(sessionId: string): Promise<AnalyticsEvent[]> {
-    const response = await apiClient.get<ApiResponse<AnalyticsEvent[]>>(
-      `/api/v1/sessions/${sessionId}/timeline`
+    const response = await apiClient.events.get<ApiResponse<AnalyticsEvent[]>>(
+      `/admin/sessions/${sessionId}/events`
     );
-    
+
     return response.data.map((event: unknown) => AnalyticsEventSchema.parse(event));
   },
 
@@ -23,11 +23,15 @@ export const sessionsApi = {
    * Get current live sessions
    */
   async getLiveSessions(): Promise<Session[]> {
-    const response = await apiClient.get<ApiResponse<Session[]>>(
-      '/api/v1/sessions/live'
+    const response = await apiClient.events.get<ApiResponse<{
+      sessions: Session[];
+      total_count: number;
+    }>>(
+      '/admin/sessions',
+      { params: { status: 'LIVE' } }
     );
-    
-    return response.data.map((session: unknown) => SessionSchema.parse(session));
+
+    return response.data.sessions.map((session: unknown) => SessionSchema.parse(session));
   },
 
   /**
@@ -38,16 +42,20 @@ export const sessionsApi = {
     count: number;
     conversionRate: number;
   }>> {
-    const response = await apiClient.get<ApiResponse<Array<{
+    const response = await apiClient.analytics.get<ApiResponse<Array<{
       path: string[];
       count: number;
-      conversionRate: number;
+      conversion_rate: number;
     }>>>(
-      '/api/v1/sessions/conversion-paths',
-      { params: { timeRange } }
+      '/analytics/conversion-paths',
+      { params: { time_range: timeRange } }
     );
-    
-    return response.data;
+
+    return response.data.map(item => ({
+      path: item.path,
+      count: item.count,
+      conversionRate: item.conversion_rate
+    }));
   },
 
   /**
@@ -66,24 +74,29 @@ export const sessionsApi = {
       count: number;
     }>;
   }> {
-    const response = await apiClient.get<ApiResponse<{
-      totalAbandoned: number;
-      abandonmentRate: number;
-      commonExitPoints: Array<{
+    const response = await apiClient.analytics.get<ApiResponse<{
+      total_abandoned: number;
+      abandonment_rate: number;
+      common_exit_points: Array<{
         stage: string;
         count: number;
         percentage: number;
       }>;
-      reasonsForAbandonment: Array<{
+      reasons_for_abandonment: Array<{
         reason: string;
         count: number;
       }>;
     }>>(
-      '/api/v1/sessions/abandonment-analysis',
-      { params: { timeRange } }
+      '/analytics/abandonment-analysis',
+      { params: { time_range: timeRange } }
     );
-    
-    return response.data;
+
+    return {
+      totalAbandoned: response.data.total_abandoned,
+      abandonmentRate: response.data.abandonment_rate,
+      commonExitPoints: response.data.common_exit_points,
+      reasonsForAbandonment: response.data.reasons_for_abandonment
+    };
   },
 
   /**
@@ -96,11 +109,21 @@ export const sessionsApi = {
     status?: string;
     userAgent?: string;
   }): Promise<Session[]> {
-    const response = await apiClient.post<ApiResponse<Session[]>>(
-      '/api/v1/sessions/search',
-      query
+    // Convert query to admin sessions API format
+    const params: any = {};
+    if (query.destination) params.destination = query.destination;
+    if (query.hotel) params.hotel = query.hotel;
+    if (query.status) params.status = query.status;
+    if (query.dateRange) params.since = query.dateRange.start;
+
+    const response = await apiClient.events.get<ApiResponse<{
+      sessions: Session[];
+      total_count: number;
+    }>>(
+      '/admin/sessions',
+      { params }
     );
-    
-    return response.data.map((session: unknown) => SessionSchema.parse(session));
+
+    return response.data.sessions.map((session: unknown) => SessionSchema.parse(session));
   }
 };

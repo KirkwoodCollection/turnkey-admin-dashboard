@@ -17,7 +17,7 @@ export const getEnvVar = (key: string, defaultValue: string = ''): string => {
 };
 
 export const getWebSocketUrl = (): string => {
-  return getEnvVar('VITE_WS_URL', 'wss://api.turnkeyhms.com/ws');
+  return getEnvVar('VITE_WEBSOCKET_URL', 'ws://localhost:8000/api/v1/admin/ws');
 };
 
 export const getApiBaseUrl = (): string => {

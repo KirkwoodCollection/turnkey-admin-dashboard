@@ -1,14 +1,39 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { ApiError } from '../types';
 
+// Service URLs from environment
+const ANALYTICS_SERVICE_URL = (import.meta as any).env.VITE_ANALYTICS_SERVICE_URL || 'http://localhost:8001/api/v1';
+const EVENTS_SERVICE_URL = (import.meta as any).env.VITE_EVENTS_SERVICE_URL || 'http://localhost:8000/api/v1';
 const API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || 'https://api.turnkeyhms.com';
 
 class ApiClient {
-  private instance: AxiosInstance;
-  // private requestQueue: Array<() => Promise<unknown>> = []; // For future request queueing
+  private analyticsInstance: AxiosInstance;
+  private eventsInstance: AxiosInstance;
+  private instance: AxiosInstance; // Legacy instance for backward compatibility
   private isRefreshing = false;
 
   constructor() {
+    // Analytics service instance
+    this.analyticsInstance = axios.create({
+      baseURL: ANALYTICS_SERVICE_URL,
+      timeout: 10000,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': (import.meta as any).env.VITE_ANALYTICS_API_KEY || '',
+      },
+    });
+
+    // Events service instance
+    this.eventsInstance = axios.create({
+      baseURL: EVENTS_SERVICE_URL,
+      timeout: 10000,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Internal-API-Key': (import.meta as any).env.VITE_EVENTS_INTERNAL_API_KEY || '',
+      },
+    });
+
+    // Legacy instance for backward compatibility
     this.instance = axios.create({
       baseURL: API_BASE_URL,
       timeout: 10000,
@@ -21,57 +46,61 @@ class ApiClient {
   }
 
   private setupInterceptors() {
-    // Request interceptor
-    this.instance.interceptors.request.use(
-      (config) => {
-        const token = localStorage.getItem('authToken');
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-      },
-      (error) => Promise.reject(error)
-    );
+    const instances = [this.analyticsInstance, this.eventsInstance, this.instance];
 
-    // Response interceptor with retry logic
-    this.instance.interceptors.response.use(
-      (response: AxiosResponse) => response,
-      async (error) => {
-        const originalRequest = error.config;
+    instances.forEach(instance => {
+      // Request interceptor
+      instance.interceptors.request.use(
+        (config) => {
+          const token = localStorage.getItem('authToken');
+          if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+          }
+          return config;
+        },
+        (error) => Promise.reject(error)
+      );
 
-        if (error.response?.status === 401 && !originalRequest._retry) {
-          originalRequest._retry = true;
-          
-          if (!this.isRefreshing) {
-            this.isRefreshing = true;
-            try {
-              await this.refreshToken();
-              return this.instance(originalRequest);
-            } catch (refreshError) {
-              this.redirectToLogin();
-              return Promise.reject(refreshError);
-            } finally {
-              this.isRefreshing = false;
+      // Response interceptor with retry logic
+      instance.interceptors.response.use(
+        (response: AxiosResponse) => response,
+        async (error) => {
+          const originalRequest = error.config;
+
+          if (error.response?.status === 401 && !originalRequest._retry) {
+            originalRequest._retry = true;
+
+            if (!this.isRefreshing) {
+              this.isRefreshing = true;
+              try {
+                await this.refreshToken();
+                return instance(originalRequest);
+              } catch (refreshError) {
+                this.redirectToLogin();
+                return Promise.reject(refreshError);
+              } finally {
+                this.isRefreshing = false;
+              }
             }
           }
-        }
 
-        // Convert axios errors to our custom ApiError
-        if (error.response) {
-          throw new ApiError(
-            error.response.data?.message || 'API request failed',
-            error.response.status,
-            error.response.data?.code
-          );
-        }
+          // Convert axios errors to our custom ApiError
+          if (error.response) {
+            throw new ApiError(
+              error.response.data?.message || 'API request failed',
+              error.response.status,
+              error.response.data?.code
+            );
+          }
 
-        if (error.code === 'NETWORK_ERROR') {
-          throw new ApiError('Network error - check your connection', 0, 'NETWORK_ERROR');
-        }
+          if (error.code === 'NETWORK_ERROR') {
+            throw new ApiError('Network error - check your connection', 0, 'NETWORK_ERROR');
+          }
 
-        throw new ApiError('Request failed', 0, 'UNKNOWN_ERROR');
-      }
-    );
+          throw new ApiError('Request failed', 0, 'UNKNOWN_ERROR');
+        }
+      );
+    });
   }
 
   private async refreshToken(): Promise<string> {
@@ -101,7 +130,52 @@ class ApiClient {
     window.location.href = '/login';
   }
 
-  // Public methods
+  // Service-specific methods
+  public get analytics() {
+    return {
+      get: async <T>(url: string, config = {}): Promise<T> => {
+        const response = await this.analyticsInstance.get(url, config);
+        return response.data;
+      },
+      post: async <T>(url: string, data?: unknown, config = {}): Promise<T> => {
+        const response = await this.analyticsInstance.post(url, data, config);
+        return response.data;
+      },
+      put: async <T>(url: string, data?: unknown, config = {}): Promise<T> => {
+        const response = await this.analyticsInstance.put(url, data, config);
+        return response.data;
+      },
+      delete: async <T>(url: string, config = {}): Promise<T> => {
+        const response = await this.analyticsInstance.delete(url, config);
+        return response.data;
+      },
+      api: this.analyticsInstance
+    };
+  }
+
+  public get events() {
+    return {
+      get: async <T>(url: string, config = {}): Promise<T> => {
+        const response = await this.eventsInstance.get(url, config);
+        return response.data;
+      },
+      post: async <T>(url: string, data?: unknown, config = {}): Promise<T> => {
+        const response = await this.eventsInstance.post(url, data, config);
+        return response.data;
+      },
+      put: async <T>(url: string, data?: unknown, config = {}): Promise<T> => {
+        const response = await this.eventsInstance.put(url, data, config);
+        return response.data;
+      },
+      delete: async <T>(url: string, config = {}): Promise<T> => {
+        const response = await this.eventsInstance.delete(url, config);
+        return response.data;
+      },
+      api: this.eventsInstance
+    };
+  }
+
+  // Legacy public methods (backward compatibility)
   public async get<T>(url: string, config = {}): Promise<T> {
     const response = await this.instance.get(url, config);
     return response.data;

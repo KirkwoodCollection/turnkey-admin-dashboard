@@ -18,10 +18,10 @@ export const analyticsApi = {
    * Get dashboard metrics for the specified time range
    */
   async getMetrics(timeRange: string): Promise<DashboardMetrics> {
-    const response = await apiClient.get<ApiResponse<DashboardMetrics>>(
-      '/api/v1/analytics/metrics', 
+    const response = await apiClient.analytics.get<ApiResponse<DashboardMetrics>>(
+      '/analytics/metrics',
       {
-        params: { timeRange }
+        params: { time_range: timeRange }
       }
     );
     return response.data;
@@ -31,19 +31,19 @@ export const analyticsApi = {
    * Get conversion funnel data
    */
   async getFunnelData(timeRange: string): Promise<FunnelStage[]> {
-    const response = await apiClient.get<ApiResponse<FunnelStage[]>>(
-      '/api/v1/analytics/funnel', 
+    const response = await apiClient.analytics.get<ApiResponse<FunnelStage[]>>(
+      '/analytics/funnel',
       {
-        params: { timeRange }
+        params: { time_range: timeRange }
       }
     );
-    
+
     // Map the response data to match our funnel stages
     return response.data.map((stage, index) => ({
       name: FUNNEL_STAGES[index] || stage.name,
       count: stage.count,
       percentage: stage.percentage,
-      dropOff: stage.dropOff
+      dropOff: stage.drop_off || stage.dropOff
     }));
   },
 
@@ -51,10 +51,13 @@ export const analyticsApi = {
    * Get heatmap data for user activity across dates and hours
    */
   async getHeatmapData(dateRange: { start: string; end: string }): Promise<HeatmapData[]> {
-    const response = await apiClient.get<ApiResponse<HeatmapData[]>>(
-      '/api/v1/analytics/heatmap', 
+    const response = await apiClient.analytics.get<ApiResponse<HeatmapData[]>>(
+      '/analytics/heatmap',
       {
-        params: dateRange
+        params: {
+          start_date: dateRange.start,
+          end_date: dateRange.end
+        }
       }
     );
     return response.data;
@@ -64,13 +67,13 @@ export const analyticsApi = {
    * Get recent analytics events
    */
   async getRecentEvents(limit = 50): Promise<AnalyticsEvent[]> {
-    const response = await apiClient.get<ApiResponse<AnalyticsEvent[]>>(
-      '/api/v1/analytics/events', 
+    const response = await apiClient.analytics.get<ApiResponse<AnalyticsEvent[]>>(
+      '/analytics/events',
       {
         params: { limit }
       }
     );
-    
+
     // Validate each event with Zod
     return response.data.map((event: unknown) => AnalyticsEventSchema.parse(event));
   },
@@ -78,22 +81,22 @@ export const analyticsApi = {
   /**
    * Get paginated session data
    */
-  async getSessions(params: PaginationParams & { 
-    timeRange?: string; 
+  async getSessions(params: PaginationParams & {
+    timeRange?: string;
     status?: string;
     search?: string;
   }): Promise<PaginatedResponse<Session>> {
-    const response = await apiClient.get<ApiResponse<PaginatedResponse<Session>>>(
-      '/api/v1/analytics/sessions',
+    const response = await apiClient.analytics.get<ApiResponse<PaginatedResponse<Session>>>(
+      '/analytics/sessions',
       { params }
     );
-    
+
     // Validate each session
     const validatedData = {
       ...response.data,
       data: response.data.data.map((session: unknown) => SessionSchema.parse(session))
     };
-    
+
     return validatedData;
   },
 
@@ -101,10 +104,10 @@ export const analyticsApi = {
    * Get session details by ID
    */
   async getSessionById(sessionId: string): Promise<Session> {
-    const response = await apiClient.get<ApiResponse<Session>>(
-      `/api/v1/analytics/sessions/${sessionId}`
+    const response = await apiClient.analytics.get<ApiResponse<Session>>(
+      `/analytics/sessions/${sessionId}`
     );
-    
+
     return SessionSchema.parse(response.data);
   },
 
@@ -116,14 +119,14 @@ export const analyticsApi = {
     count: number;
     percentage: number;
   }>> {
-    const response = await apiClient.get<ApiResponse<Array<{
+    const response = await apiClient.analytics.get<ApiResponse<Array<{
       destination: string;
       count: number;
       percentage: number;
     }>>>(
-      '/api/v1/analytics/destinations',
+      '/analytics/destinations',
       {
-        params: { timeRange, limit }
+        params: { time_range: timeRange, limit }
       }
     );
     return response.data;
@@ -138,26 +141,33 @@ export const analyticsApi = {
     bookings: number;
     conversionRate: number;
   }>> {
-    const response = await apiClient.get<ApiResponse<Array<{
+    const response = await apiClient.analytics.get<ApiResponse<Array<{
       hotel: string;
       searches: number;
       bookings: number;
-      conversionRate: number;
+      conversion_rate: number;
     }>>>(
-      '/api/v1/analytics/hotels',
+      '/analytics/hotels',
       {
-        params: { timeRange, limit }
+        params: { time_range: timeRange, limit }
       }
     );
-    return response.data;
+
+    // Map response to match interface
+    return response.data.map(hotel => ({
+      hotel: hotel.hotel,
+      searches: hotel.searches,
+      bookings: hotel.bookings,
+      conversionRate: hotel.conversion_rate
+    }));
   },
 
   /**
    * Get real-time active users count
    */
   async getActiveUsersCount(): Promise<number> {
-    const response = await apiClient.get<ApiResponse<{ count: number }>>(
-      '/api/v1/analytics/active-users'
+    const response = await apiClient.analytics.get<ApiResponse<{ count: number }>>(
+      '/analytics/active-users'
     );
     return response.data.count;
   },
@@ -166,13 +176,13 @@ export const analyticsApi = {
    * Export analytics data
    */
   async exportData(
-    timeRange: string, 
+    timeRange: string,
     format: 'csv' | 'json' = 'csv'
   ): Promise<Blob> {
-    const response = await apiClient.api.get(
-      '/api/v1/analytics/export',
+    const response = await apiClient.analytics.api.get(
+      '/analytics/export',
       {
-        params: { timeRange, format },
+        params: { time_range: timeRange, format },
         responseType: 'blob'
       }
     );
