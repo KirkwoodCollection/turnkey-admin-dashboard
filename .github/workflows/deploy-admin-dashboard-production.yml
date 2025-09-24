@@ -88,7 +88,7 @@ jobs:
           VITE_GA_MEASUREMENT_ID: ${{ secrets.GA_MEASUREMENT_ID }}
           VITE_VERSION: ${{ steps.version.outputs.version }}
         run: |
-          npm run build:production
+          npx vite build --config vite.config.production.ts
           echo "${{ steps.version.outputs.version }}" > dist/version.txt
 
       - name: Upload build artifacts
