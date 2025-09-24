@@ -1,6 +1,10 @@
 #!/bin/bash
 
 # GCP Infrastructure Setup Script for Admin Dashboard
+#
+# This script sets up the basic GCP infrastructure including service accounts.
+# After running this script, you must also run setup-gcp-permissions.sh
+# to grant the GitHub Actions deployer permission to use the service accounts.
 
 set -e
 
