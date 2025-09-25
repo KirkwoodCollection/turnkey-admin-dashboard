@@ -1,4 +1,4 @@
-import { apiClient, setAuthToken, clearAuthToken } from '../../../src/services/client';
+import { apiClient, setAuthToken, clearAuthToken } from '../../../src/api/client';
 
 // Mock fetch globally
 global.fetch = jest.fn();

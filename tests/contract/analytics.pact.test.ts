@@ -1,6 +1,6 @@
 import { Pact, Interaction, Matchers } from '@pact-foundation/pact';
 import { getDashboardMetrics, getSessions, exportMetrics } from '../../src/services/analytics';
-import { apiClient } from '../../src/services/client';
+import { apiClient } from '../../src/api/client';
 import path from 'path';
 
 const { like, eachLike, iso8601DateTime, term, integer } = Matchers;

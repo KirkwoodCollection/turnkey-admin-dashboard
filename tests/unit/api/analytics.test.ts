@@ -4,11 +4,11 @@ import {
   getAnalyticsEvents,
   exportMetrics,
 } from '../../../src/services/analytics';
-import * as client from '../../../src/services/client';
+import * as client from '../../../src/api/client';
 import { mockDashboardMetrics, mockSessions, mockAnalyticsEvents } from '../../fixtures/mockData';
 
 // Mock the API client
-jest.mock('../../../src/services/client');
+jest.mock('../../../src/api/client');
 const mockClient = client as jest.Mocked<typeof client>;
 
 describe('Analytics API', () => {
