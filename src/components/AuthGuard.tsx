@@ -1,6 +1,6 @@
 import React from 'react';
-import { Box, Button, Card, CardContent, TextField, Typography, CircularProgress } from '@mui/material';
-import { LoginRounded } from '@mui/icons-material';
+import { Box, Button, Card, CardContent, Typography, CircularProgress } from '@mui/material';
+import { Google } from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';
 
 interface AuthGuardProps {
@@ -8,22 +8,19 @@ interface AuthGuardProps {
 }
 
 export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
-  const { user, isAuthenticated, isLoading, login } = useAuth();
-  const [email, setEmail] = React.useState('admin@turnkeyhms.com');
-  const [password, setPassword] = React.useState('password');
+  const { user, isAuthenticated, isLoading, loginWithGoogle } = useAuth();
   const [loginLoading, setLoginLoading] = React.useState(false);
   const [loginError, setLoginError] = React.useState<string | null>(null);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleGoogleLogin = async () => {
     setLoginLoading(true);
     setLoginError(null);
-    
+
     try {
-      await login(email, password);
+      await loginWithGoogle();
     } catch (error) {
-      setLoginError('Login failed. Please check your credentials.');
-      console.error('Login error:', error);
+      setLoginError('Google authentication failed. Please try again.');
+      console.error('Google login error:', error);
     } finally {
       setLoginLoading(false);
     }
@@ -66,29 +63,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
               </Typography>
             </Box>
 
-            <form onSubmit={handleLogin}>
-              <TextField
-                fullWidth
-                label="Email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                sx={{ mb: 2 }}
-                disabled={loginLoading}
-              />
-              
-              <TextField
-                fullWidth
-                label="Password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                sx={{ mb: 3 }}
-                disabled={loginLoading}
-              />
-
+            <Box sx={{ mb: 2 }}>
               {loginError && (
                 <Typography color="error" variant="body2" sx={{ mb: 2 }}>
                   {loginError}
@@ -96,19 +71,26 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
               )}
 
               <Button
-                type="submit"
                 fullWidth
                 variant="contained"
                 size="large"
+                onClick={handleGoogleLogin}
                 disabled={loginLoading}
-                startIcon={loginLoading ? <CircularProgress size={20} /> : <LoginRounded />}
+                startIcon={loginLoading ? <CircularProgress size={20} /> : <Google />}
+                sx={{
+                  mb: 2,
+                  backgroundColor: '#4285f4',
+                  '&:hover': {
+                    backgroundColor: '#357ae8',
+                  }
+                }}
               >
-                {loginLoading ? 'Signing in...' : 'Sign In'}
+                {loginLoading ? 'Signing in...' : 'Sign in with Google'}
               </Button>
-            </form>
+            </Box>
 
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block', textAlign: 'center' }}>
-              Demo credentials: admin@turnkeyhms.com / password
+            <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', display: 'block' }}>
+              Use your Google account to access the admin dashboard
             </Typography>
           </CardContent>
         </Card>

@@ -1,11 +1,19 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import {
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged,
+  User as FirebaseUser,
+  getIdToken as getFirebaseIdToken
+} from 'firebase/auth';
+import { auth, googleProvider } from '../config/firebase';
 import { User } from '../types';
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   logout: () => void;
   refreshToken: () => Promise<void>;
   getIdToken: () => Promise<string>;
@@ -21,103 +29,73 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check for existing auth on mount
+  // Listen for authentication state changes
   useEffect(() => {
-    checkAuthState();
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        // Convert Firebase user to our User type
+        const user: User = {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email || '',
+          displayName: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || '',
+          role: 'admin', // All users are admin for now
+        };
+        setUser(user);
+      } else {
+        setUser(null);
+      }
+      setIsLoading(false);
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
   }, []);
 
-  const checkAuthState = async () => {
-    try {
-      const token = localStorage.getItem('authToken');
-      const userData = localStorage.getItem('userData');
-      
-      if (token && userData) {
-        const parsedUser = JSON.parse(userData) as User;
-        setUser(parsedUser);
-      }
-    } catch (error) {
-      console.error('Error checking auth state:', error);
-      // Clear invalid data
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('userData');
-      localStorage.removeItem('refreshToken');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const login = async (email: string, _password: string) => {
+  const loginWithGoogle = async () => {
     setIsLoading(true);
     try {
-      // In a real app, this would call Firebase Auth or your auth API
-      // For now, create a mock user
-      const mockUser: User = {
-        uid: 'mock-user-id',
-        email: email,
-        role: 'admin',
-        displayName: email.split('@')[0],
-      };
-
-      // Mock tokens
-      const mockToken = 'mock-jwt-token-' + Date.now();
-      const mockRefreshToken = 'mock-refresh-token-' + Date.now();
-
-      // Store in localStorage
-      localStorage.setItem('authToken', mockToken);
-      localStorage.setItem('refreshToken', mockRefreshToken);
-      localStorage.setItem('userData', JSON.stringify(mockUser));
-
-      setUser(mockUser);
+      await signInWithPopup(auth, googleProvider);
+      // User state will be updated automatically via onAuthStateChanged
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Google login error:', error);
       throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('userData');
-    setUser(null);
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      // User state will be updated automatically via onAuthStateChanged
+    } catch (error) {
+      console.error('Logout error:', error);
+      throw error;
+    }
   };
 
   const refreshToken = async () => {
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
-        throw new Error('No refresh token available');
+      if (auth.currentUser) {
+        // Force refresh the Firebase token
+        await auth.currentUser.getIdToken(true);
+      } else {
+        throw new Error('No authenticated user');
       }
-
-      // In a real app, this would call your refresh endpoint
-      const newToken = 'refreshed-jwt-token-' + Date.now();
-      localStorage.setItem('authToken', newToken);
     } catch (error) {
       console.error('Token refresh error:', error);
-      logout();
+      await logout();
       throw error;
     }
   };
 
   const getIdToken = async (): Promise<string> => {
     try {
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        throw new Error('No auth token available');
+      if (auth.currentUser) {
+        return await getFirebaseIdToken(auth.currentUser);
+      } else {
+        throw new Error('No authenticated user');
       }
-
-      // Check if token needs refresh (simplified check)
-      // In production, decode JWT and check expiry
-      const tokenAge = Date.now() - (user?.lastLogin?.getTime() || 0);
-      const ONE_HOUR = 60 * 60 * 1000;
-
-      if (tokenAge > ONE_HOUR) {
-        await refreshToken();
-        return localStorage.getItem('authToken') || '';
-      }
-
-      return token;
     } catch (error) {
       console.error('Error getting ID token:', error);
       throw error;
@@ -128,7 +106,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     isAuthenticated: !!user,
     isLoading,
-    login,
+    loginWithGoogle,
     logout,
     refreshToken,
     getIdToken,
