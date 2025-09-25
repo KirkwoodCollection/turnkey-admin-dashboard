@@ -9,7 +9,6 @@ import {
   Chip,
   Button,
   ButtonGroup,
-  Divider,
   Tooltip,
   LinearProgress,
   IconButton,
@@ -19,10 +18,9 @@ import {
   TrendingUpRounded,
   ExpandMoreRounded,
   ExpandLessRounded,
-  InfoRounded,
 } from '@mui/icons-material';
 import { FunnelChart } from './FunnelChart';
-import { AnalyticsEvent, EventType, EVENT_METADATA, FunnelStage } from '../types';
+import { AnalyticsEvent, EventType, EVENT_METADATA } from '../types';
 
 // Enhanced funnel stages for 28-event system
 export const ENHANCED_FUNNEL_STAGES = [

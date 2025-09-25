@@ -43,7 +43,7 @@ export const analyticsApi = {
       name: FUNNEL_STAGES[index] || stage.name,
       count: stage.count,
       percentage: stage.percentage,
-      dropOff: stage.drop_off || stage.dropOff
+      dropOff: (stage as any).drop_off || stage.dropOff
     }));
   },
 

@@ -20,7 +20,7 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Legend,
+  Tooltip as RechartsTooltip,
 } from 'recharts';
 import { AnalyticsEvent, EVENT_CATEGORIES, EVENT_METADATA, EventType } from '../types';
 
@@ -36,7 +36,7 @@ interface CategoryData {
   count: number;
   percentage: number;
   color: string;
-  events: EventType[];
+  events: readonly EventType[];
   breakdown: Array<{
     eventType: EventType;
     label: string;
@@ -74,7 +74,7 @@ export const EventCategoryChart: React.FC<EventCategoryChartProps> = ({
       // Find which category this event belongs to
       let eventCategory = 'uncategorized';
       for (const [category, categoryEvents] of Object.entries(EVENT_CATEGORIES)) {
-        if (categoryEvents.includes(eventType)) {
+        if ((categoryEvents as readonly EventType[]).includes(eventType)) {
           eventCategory = category;
           break;
         }
@@ -121,7 +121,7 @@ export const EventCategoryChart: React.FC<EventCategoryChartProps> = ({
           count,
           percentage,
           color: CATEGORY_COLORS[category as keyof typeof CATEGORY_COLORS] || '#757575',
-          events: categoryEvents,
+          events: categoryEvents as readonly EventType[],
           breakdown
         });
       }
@@ -196,7 +196,7 @@ export const EventCategoryChart: React.FC<EventCategoryChartProps> = ({
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip
+                  <RechartsTooltip
                     formatter={(value: number, name: string) => [
                       `${value.toLocaleString()} events`,
                       name
@@ -221,7 +221,7 @@ export const EventCategoryChart: React.FC<EventCategoryChartProps> = ({
                     height={80}
                   />
                   <YAxis />
-                  <Tooltip
+                  <RechartsTooltip
                     formatter={(value: number) => [`${value.toLocaleString()}`, 'Events']}
                   />
                   <Bar dataKey="count" radius={[4, 4, 0, 0]} />
