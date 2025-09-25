@@ -30,7 +30,7 @@ import {
 import { Session, SESSION_STATUS_COLORS } from '../types';
 import { safeArray, safeObject } from '../utils/typeGuards';
 import { format } from 'date-fns';
-import { useEventsWebSocket } from '../hooks/useEventsWebSocket';
+import { useRealtimeWebSocket } from '../hooks/useRealtimeWebSocket';
 import { useActiveSessions } from '../hooks/useEventsApi';
 import { useAnalyticsSessions } from '../hooks/useAnalyticsData';
 import { TimeRange } from '../services/analyticsApi';
@@ -75,7 +75,7 @@ export const SessionRecordsTable: React.FC<SessionRecordsTableProps> = ({
   );
 
   // WebSocket connection for real-time updates
-  const { isConnected } = useEventsWebSocket({
+  const { isConnected } = useRealtimeWebSocket({
     propertyId,
     onSessionUpdate: useRealtime ? (updatedSession) => {
       setLocalSessions(prev => {

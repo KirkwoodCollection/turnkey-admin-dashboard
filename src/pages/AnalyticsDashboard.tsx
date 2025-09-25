@@ -33,7 +33,7 @@ import { SessionRecordsTable } from '../components/SessionRecordsTable';
 import { LiveActivityFeed } from '../components/LiveActivityFeed';
 
 import { useDashboardData, useExportAnalytics } from '../hooks/useAnalyticsData';
-import { useAnalyticsWebSocket } from '../hooks/useAnalyticsWebSocket';
+import { useRealtimeWebSocket } from '../hooks/useRealtimeWebSocket';
 import { TimeRange } from '../services/analyticsApi';
 
 interface AnalyticsDashboardProps {
@@ -52,7 +52,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
     error,
   } = useDashboardData(timeRange, propertyId);
 
-  const { isConnected: wsConnected, error: wsError } = useAnalyticsWebSocket({
+  const { isConnected: wsConnected, error: wsError } = useRealtimeWebSocket({
     propertyId,
     autoInvalidateQueries: true,
     onMetricsUpdate: () => {

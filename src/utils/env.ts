@@ -16,7 +16,7 @@ export const getEnvVar = (key: keyof ImportMetaEnv, defaultValue: string = ''): 
 };
 
 export const getWebSocketUrl = (): string => {
-  return getEnvVar('VITE_WEBSOCKET_URL', 'ws://localhost:8000/api/v1/admin/ws');
+  return getEnvVar('VITE_WEBSOCKET_URL', 'ws://localhost:8003/websocket/ws');
 };
 
 export const getApiBaseUrl = (): string => {

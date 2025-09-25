@@ -33,7 +33,7 @@ import {
 } from '@mui/icons-material';
 import { formatDistanceToNow } from 'date-fns';
 import { Event, EventType, Session } from '../types';
-import { useEventsWebSocket } from '../hooks/useEventsWebSocket';
+import { useRealtimeWebSocket } from '../hooks/useRealtimeWebSocket';
 import { useRealtimeMetrics } from '../hooks/useEventsApi';
 import { safeObject, getMetricsValue } from '../utils/typeGuards';
 
@@ -70,7 +70,7 @@ export const LiveActivityFeed: React.FC<LiveActivityFeedProps> = ({
   const metrics = safeObject(metricsResponse);
 
   // WebSocket connection
-  const { isConnected } = useEventsWebSocket({
+  const { isConnected } = useRealtimeWebSocket({
     propertyId,
     onSessionUpdate: (session: Session) => {
       if (isPaused) return;

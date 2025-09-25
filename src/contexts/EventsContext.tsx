@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Session, Event } from '../types';
-import { useEventsWebSocket } from '../hooks/useEventsWebSocket';
+import { useRealtimeWebSocket } from '../hooks/useRealtimeWebSocket';
 import { useActiveSessions, useRealtimeMetrics } from '../hooks/useEventsApi';
 
 interface EventsContextValue {
@@ -67,7 +67,7 @@ export const EventsProvider: React.FC<EventsProviderProps> = ({
   const { data: metrics } = useRealtimeMetrics(selectedPropertyId || undefined);
 
   // WebSocket connection
-  const { isConnected, error: connectionError } = useEventsWebSocket({
+  const { isConnected, error: connectionError } = useRealtimeWebSocket({
     propertyId: selectedPropertyId || undefined,
     onSessionUpdate: (session: Session) => {
       // Update session history
