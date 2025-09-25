@@ -1,0 +1,109 @@
+src/components/health/HealthMetricsChart.tsx(39,45): error TS6133: 'HEALTH_STATUS_COLORS' is declared but its value is never read.
+src/components/health/HealthMetricsChart.tsx(449,15): error TS2322: Type 'Element | null' is not assignable to type 'ReactElement<any, string | JSXElementConstructor<any>>'.
+src/components/health/IntegrationTestRunner.tsx(15,3): error TS6133: 'Collapse' is declared but its value is never read.
+src/components/health/IntegrationTestRunner.tsx(31,3): error TS6133: 'WarningRounded' is declared but its value is never read.
+src/components/health/IntegrationTestRunner.tsx(33,3): error TS6133: 'ExpandMoreRounded' is declared but its value is never read.
+src/components/health/IntegrationTestRunner.tsx(34,3): error TS6133: 'ExpandLessRounded' is declared but its value is never read.
+src/components/health/IntegrationTestRunner.tsx(55,10): error TS6133: 'expandedTests' is declared but its value is never read.
+src/components/health/IntegrationTestRunner.tsx(57,23): error TS6133: 'setAutoRefresh' is declared but its value is never read.
+src/components/health/IntegrationTestRunner.tsx(59,9): error TS6133: 'toggleTestExpanded' is declared but its value is never read.
+src/components/health/IntegrationTestRunner.tsx(125,9): error TS6133: 'passedTests' is declared but its value is never read.
+src/components/health/IntegrationTestRunner.tsx(126,9): error TS6133: 'failedTests' is declared but its value is never read.
+src/components/health/ServiceHealthCard.tsx(23,3): error TS6133: 'MemoryRounded' is declared but its value is never read.
+src/components/Layout.tsx(44,3): error TS6133: 'currentPage' is declared but its value is never read.
+src/components/LiveActivityFeed.tsx(318,31): error TS2339: Property 'BOOKING_CONFIRMED' does not exist on type 'typeof EventType'.
+src/components/LiveActivityFeed.tsx(318,76): error TS2339: Property 'BOOKING_COMPLETED' does not exist on type 'typeof EventType'.
+src/components/LiveActivityFeed.tsx(328,20): error TS2551: Property 'BOOKING_ENGINE_OPENED' does not exist on type 'typeof EventType'. Did you mean 'BOOKING_ENGINE_EXITED'?
+src/components/LiveActivityFeed.tsx(330,20): error TS2339: Property 'SEARCH_PERFORMED' does not exist on type 'typeof EventType'.
+src/components/LiveActivityFeed.tsx(332,20): error TS2339: Property 'HOTEL_SELECTED' does not exist on type 'typeof EventType'.
+src/components/LiveActivityFeed.tsx(334,20): error TS2339: Property 'ROOM_SELECTED' does not exist on type 'typeof EventType'.
+src/components/LiveActivityFeed.tsx(336,20): error TS2339: Property 'BOOKING_CONFIRMED' does not exist on type 'typeof EventType'.
+src/components/LiveActivityFeed.tsx(346,17): error TS2339: Property 'eventType' does not exist on type 'CustomEvent'.
+src/components/LiveActivityFeed.tsx(347,20): error TS2339: Property 'SEARCH_PERFORMED' does not exist on type 'typeof EventType'.
+src/components/LiveActivityFeed.tsx(348,36): error TS2339: Property 'destination' does not exist on type '{}'.
+src/components/LiveActivityFeed.tsx(349,20): error TS2339: Property 'HOTEL_SELECTED' does not exist on type 'typeof EventType'.
+src/components/LiveActivityFeed.tsx(350,23): error TS2339: Property 'hotelName' does not exist on type '{}'.
+src/components/LiveActivityFeed.tsx(351,20): error TS2339: Property 'ROOM_SELECTED' does not exist on type 'typeof EventType'.
+src/components/LiveActivityFeed.tsx(352,23): error TS2339: Property 'roomType' does not exist on type '{}'.
+src/components/LiveActivityFeed.tsx(354,23): error TS2339: Property 'description' does not exist on type '{}'.
+src/components/LiveActivityFeed.tsx(360,20): error TS2339: Property 'SEARCH_PERFORMED' does not exist on type 'typeof EventType'.
+src/components/LiveActivityFeed.tsx(362,20): error TS2339: Property 'HOTEL_SELECTED' does not exist on type 'typeof EventType'.
+src/components/LiveActivityFeed.tsx(364,20): error TS2339: Property 'BOOKING_CONFIRMED' does not exist on type 'typeof EventType'.
+src/components/LiveActivityFeed.tsx(372,31): error TS2339: Property 'BOOKING_CONFIRMED' does not exist on type 'typeof EventType'.
+src/components/SessionRecordsTable.tsx(97,28): error TS2339: Property 'sessions' does not exist on type '{}'.
+src/components/SessionRecordsTable.tsx(110,24): error TS2345: Argument of type '{}' is not assignable to parameter of type 'SetStateAction<{ sessionId: string; userId: string; hotel: string; destination: string; status: "LIVE" | "DORMANT" | "CONFIRMED_BOOKING" | "ABANDONED"; createdAt: string; updatedAt: string; currentStage: number; ... 9 more ...; ipAddress?: string | undefined; }[]>'.
+src/components/SessionRecordsTable.tsx(115,44): error TS7006: Parameter 'session' implicitly has an 'any' type.
+src/components/SessionRecordsTable.tsx(223,43): error TS7006: Parameter 'session' implicitly has an 'any' type.
+src/components/TopStatsPanel.tsx(77,3): error TS6133: 'metrics' is declared but its value is never read.
+src/components/TopStatsPanel.tsx(111,27): error TS2304: Cannot find name 'metricsData'.
+src/components/TopStatsPanel.tsx(118,17): error TS2304: Cannot find name 'metricsData'.
+src/components/TopStatsPanel.tsx(125,17): error TS2304: Cannot find name 'metricsData'.
+src/components/TopStatsPanel.tsx(132,29): error TS2304: Cannot find name 'metricsData'.
+src/components/TopStatsPanel.tsx(139,17): error TS2304: Cannot find name 'metricsData'.
+src/components/UserJourney.tsx(13,3): error TS6133: 'Divider' is declared but its value is never read.
+src/components/UserJourney.tsx(20,3): error TS6133: 'Alert' is declared but its value is never read.
+src/components/UserJourney.tsx(37,3): error TS6133: 'WarningRounded' is declared but its value is never read.
+src/components/UserJourney.tsx(236,25): error TS2322: Type '{ children: string | number | true | Iterable<ReactNode> | Element; sx: { bgcolor: string; border: number; borderColor: "warning.main" | "grey.300"; cursor: "pointer"; '&:hover': { ...; }; transition: "transform 0.2s"; }; onClick: () => void; }' is not assignable to type 'IntrinsicAttributes & TimelineDotProps'.
+src/contexts/EventsContext.tsx(81,26): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+src/contexts/EventsContext.tsx(120,30): error TS2345: Argument of type '{}' is not assignable to parameter of type 'SetStateAction<{ sessionId: string; userId: string; hotel: string; destination: string; status: "LIVE" | "DORMANT" | "CONFIRMED_BOOKING" | "ABANDONED"; createdAt: string; updatedAt: string; currentStage: number; ... 9 more ...; ipAddress?: string | undefined; }[]>'.
+src/contexts/EventsContext.tsx(124,23): error TS2339: Property 'forEach' does not exist on type '{}'.
+src/contexts/EventsContext.tsx(124,31): error TS7006: Parameter 'session' implicitly has an 'any' type.
+src/contexts/EventsContext.tsx(150,5): error TS2740: Type '{}' is missing the following properties from type '{ sessionId: string; userId: string; hotel: string; destination: string; status: "LIVE" | "DORMANT" | "CONFIRMED_BOOKING" | "ABANDONED"; createdAt: string; updatedAt: string; currentStage: number; ... 9 more ...; ipAddress?: string | undefined; }[]': length, pop, push, concat, and 28 more.
+src/contexts/EventsContext.tsx(154,5): error TS2322: Type '{} | null' is not assignable to type '{ activeSessions: number; sessionsLastHour: number; eventsLastMinute: number; conversionRate?: number | undefined; } | null'.
+src/contexts/HealthContext.tsx(70,5): error TS2322: Type 'number | false' is not assignable to type 'number | undefined'.
+src/hooks/useAnalyticsData.ts(4,3): error TS6133: 'TopMetrics' is declared but its value is never read.
+src/hooks/useAnalyticsData.ts(5,3): error TS6133: 'FunnelStage' is declared but its value is never read.
+src/hooks/useAnalyticsData.ts(6,3): error TS6133: 'TopDestination' is declared but its value is never read.
+src/hooks/useAnalyticsData.ts(7,3): error TS6133: 'TopHotel' is declared but its value is never read.
+src/hooks/useAnalyticsData.ts(8,3): error TS6133: 'HeatmapDataPoint' is declared but its value is never read.
+src/hooks/useAnalyticsData.ts(9,3): error TS6133: 'AnalyticsSession' is declared but its value is never read.
+src/hooks/useAnalyticsData.ts(30,5): error TS2769: No overload matches this call.
+src/hooks/useAnalyticsData.ts(41,5): error TS2769: No overload matches this call.
+src/hooks/useAnalyticsData.ts(51,5): error TS2769: No overload matches this call.
+src/hooks/useAnalyticsData.ts(61,5): error TS2769: No overload matches this call.
+src/hooks/useAnalyticsData.ts(74,45): error TS2345: Argument of type 'TimeRange' is not assignable to parameter of type 'number | undefined'.
+src/hooks/useAnalyticsData.ts(76,5): error TS2769: No overload matches this call.
+src/hooks/useAnalyticsData.ts(87,5): error TS2769: No overload matches this call.
+src/hooks/useAnalyticsData.ts(97,5): error TS2769: No overload matches this call.
+src/hooks/useAnalyticsData.ts(129,39): error TS2559: Type '(string | undefined)[]' has no properties in common with type 'InvalidateQueryFilters<readonly unknown[]>'.
+src/hooks/useAnalyticsData.ts(131,39): error TS2559: Type 'string[]' has no properties in common with type 'InvalidateQueryFilters<readonly unknown[]>'.
+src/hooks/useAnalyticsData.ts(136,39): error TS2559: Type '(string | undefined)[]' has no properties in common with type 'InvalidateQueryFilters<readonly unknown[]>'.
+src/hooks/useAnalyticsData.ts(138,39): error TS2559: Type 'string[]' has no properties in common with type 'InvalidateQueryFilters<readonly unknown[]>'.
+src/hooks/useAnalyticsData.ts(141,26): error TS6133: 'propertyId' is declared but its value is never read.
+src/hooks/useAnalyticsData.ts(142,37): error TS2559: Type 'string[]' has no properties in common with type 'InvalidateQueryFilters<readonly unknown[]>'.
+src/hooks/useAnalyticsData.ts(143,37): error TS2559: Type 'string[]' has no properties in common with type 'InvalidateQueryFilters<readonly unknown[]>'.
+src/hooks/useAnalyticsData.ts(146,37): error TS2559: Type '(string | undefined)[]' has no properties in common with type 'InvalidateQueryFilters<readonly unknown[]>'.
+src/hooks/useAnalyticsData.ts(149,37): error TS2559: Type 'string[]' has no properties in common with type 'InvalidateQueryFilters<readonly unknown[]>'.
+src/hooks/useAnalyticsData.ts(156,9): error TS6133: 'queryClient' is declared but its value is never read.
+src/hooks/useAnalyticsData.ts(164,50): error TS2345: Argument of type 'TimeRange' is not assignable to parameter of type '"csv" | "json" | "xlsx" | undefined'.
+src/hooks/useAnalyticsData.ts(167,46): error TS2345: Argument of type 'Blob | ExportResponse' is not assignable to parameter of type 'Blob | MediaSource'.
+src/hooks/useAnalyticsWebSocket.ts(68,6): error TS6196: 'AnalyticsMessage' is declared but never used.
+src/hooks/useAnalyticsWebSocket.ts(158,41): error TS2559: Type 'string[]' has no properties in common with type 'InvalidateQueryFilters<readonly unknown[]>'.
+src/hooks/useAnalyticsWebSocket.ts(195,9): error TS2322: Type '"analytics.subscribe"' is not assignable to type '"SESSION_UPDATE" | "NEW_EVENT" | "METRICS_UPDATE" | "USER_COUNT" | "HEALTH_UPDATE" | "ERROR" | "PING" | "PONG" | "analytics.metrics.updated" | "session.updated" | undefined'.
+src/hooks/useAnalyticsWebSocket.ts(209,9): error TS2322: Type '"analytics.subscribe"' is not assignable to type '"SESSION_UPDATE" | "NEW_EVENT" | "METRICS_UPDATE" | "USER_COUNT" | "HEALTH_UPDATE" | "ERROR" | "PING" | "PONG" | "analytics.metrics.updated" | "session.updated" | undefined'.
+src/hooks/useEventsApi.ts(1,20): error TS6133: 'useMutation' is declared but its value is never read.
+src/hooks/useEventsApi.ts(3,10): error TS6133: 'Session' is declared but its value is never read.
+src/hooks/useEventsApi.ts(3,19): error TS6133: 'Event' is declared but its value is never read.
+src/hooks/useEventsApi.ts(28,5): error TS2554: Expected 1-2 arguments, but got 3.
+src/hooks/useEventsApi.ts(39,5): error TS2554: Expected 1-2 arguments, but got 3.
+src/hooks/useEventsApi.ts(50,5): error TS2554: Expected 1-2 arguments, but got 3.
+src/hooks/useEventsApi.ts(69,5): error TS2554: Expected 1-2 arguments, but got 3.
+src/hooks/useEventsApi.ts(79,5): error TS2554: Expected 1-2 arguments, but got 3.
+src/hooks/useEventsApi.ts(91,5): error TS2554: Expected 1-2 arguments, but got 3.
+src/hooks/useEventsApi.ts(103,5): error TS2554: Expected 1-2 arguments, but got 3.
+src/hooks/useEventsApi.ts(115,35): error TS2559: Type 'string' has no properties in common with type 'InvalidateQueryFilters<readonly unknown[]>'.
+src/hooks/useEventsApi.ts(116,35): error TS2559: Type 'string[]' has no properties in common with type 'InvalidateQueryFilters<readonly unknown[]>'.
+src/hooks/useEventsApi.ts(124,35): error TS2559: Type 'string[]' has no properties in common with type 'InvalidateQueryFilters<readonly unknown[]>'.
+src/hooks/useEventsApi.ts(125,35): error TS2559: Type 'string[]' has no properties in common with type 'InvalidateQueryFilters<readonly unknown[]>'.
+src/hooks/useEventsApi.ts(133,35): error TS2559: Type 'string[]' has no properties in common with type 'InvalidateQueryFilters<readonly unknown[]>'.
+src/hooks/useEventsWebSocket.ts(9,3): error TS6133: 'SessionUpdatedMessage' is declared but its value is never read.
+src/hooks/useEventsWebSocket.ts(45,39): error TS2339: Property 'propertyId' does not exist on type '{ sessionId: string; userId: string; hotel: string; destination: string; status: "LIVE" | "DORMANT" | "CONFIRMED_BOOKING" | "ABANDONED"; createdAt: string; updatedAt: string; currentStage: number; ... 9 more ...; ipAddress?: string | undefined; }'.
+src/hooks/useEventsWebSocket.ts(57,45): error TS2559: Type 'string[]' has no properties in common with type 'InvalidateQueryFilters<readonly unknown[]>'.
+src/hooks/useEventsWebSocket.ts(58,45): error TS2559: Type 'string[]' has no properties in common with type 'InvalidateQueryFilters<readonly unknown[]>'.
+src/hooks/useEventsWebSocket.ts(75,45): error TS2559: Type 'string[]' has no properties in common with type 'InvalidateQueryFilters<readonly unknown[]>'.
+src/hooks/useEventsWebSocket.ts(87,45): error TS2559: Type 'string[]' has no properties in common with type 'InvalidateQueryFilters<readonly unknown[]>'.
+src/hooks/useEventsWebSocket.ts(102,41): error TS2559: Type 'string[]' has no properties in common with type 'InvalidateQueryFilters<readonly unknown[]>'.
+src/hooks/useEventsWebSocket.ts(145,9): error TS2322: Type '"subscribe"' is not assignable to type '"SESSION_UPDATE" | "NEW_EVENT" | "METRICS_UPDATE" | "USER_COUNT" | "HEALTH_UPDATE" | "ERROR" | "PING" | "PONG" | "analytics.metrics.updated" | "session.updated" | undefined'.
+src/hooks/useLiveEvents.ts(203,25): error TS2345: Argument of type 'EventType' is not assignable to parameter of type 'never'.
+src/pages/Overview.tsx(19,10): error TS6133: 'CustomEvent' is declared but its value is never read.
+src/pages/Overview.tsx(247,17): error TS2322: Type '{ events: { eventId: string; sessionId: string; eventType: string; timestamp: string; data: {}; userAgent: string; }[]; onFiltersChange: Dispatch<SetStateAction<{ categories: string[]; eventTypes: EventType[]; importance: string[]; timeRange: string; searchText: string; }>>; currentFilters: { ...; }; }' is not assignable to type 'IntrinsicAttributes & EventFiltersProps'.

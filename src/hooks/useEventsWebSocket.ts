@@ -6,7 +6,6 @@ import {
   isSessionMessage,
   isEventMessage,
   isMetricsMessage,
-  SessionUpdatedMessage,
   EventReceivedMessage,
 } from '../types/websocket';
 import { Session } from '../types';
@@ -42,7 +41,7 @@ export function useEventsWebSocket(options: UseEventsWebSocketOptions = {}) {
             const session = message.payload.session;
             
             // Filter by propertyId if specified
-            if (propertyId && session.propertyId !== propertyId) {
+            if (propertyId && (session as any).propertyId !== propertyId) {
               return;
             }
 
@@ -54,8 +53,8 @@ export function useEventsWebSocket(options: UseEventsWebSocketOptions = {}) {
               );
               
               // Invalidate sessions list to refetch
-              queryClient.invalidateQueries(['sessions']);
-              queryClient.invalidateQueries(['activeSessions']);
+              queryClient.invalidateQueries({ queryKey: ['sessions'] });
+              queryClient.invalidateQueries({ queryKey: ['activeSessions'] });
             }
 
             // Call custom handler
@@ -72,7 +71,7 @@ export function useEventsWebSocket(options: UseEventsWebSocketOptions = {}) {
             
             // Invalidate session events cache
             if (autoInvalidateQueries) {
-              queryClient.invalidateQueries(['sessionEvents', sessionId]);
+              queryClient.invalidateQueries({ queryKey: ['sessionEvents', sessionId] });
             }
 
             // Call custom handler
@@ -84,7 +83,7 @@ export function useEventsWebSocket(options: UseEventsWebSocketOptions = {}) {
             
             // Invalidate session events cache
             if (autoInvalidateQueries) {
-              queryClient.invalidateQueries(['sessionEvents', batchSessionId]);
+              queryClient.invalidateQueries({ queryKey: ['sessionEvents', batchSessionId] });
             }
 
             // Call custom handler for each event
@@ -99,7 +98,7 @@ export function useEventsWebSocket(options: UseEventsWebSocketOptions = {}) {
       if (isMetricsMessage(message)) {
         // Invalidate metrics queries
         if (autoInvalidateQueries) {
-          queryClient.invalidateQueries(['realtimeMetrics']);
+          queryClient.invalidateQueries({ queryKey: ['realtimeMetrics'] });
         }
 
         // Call custom handler
@@ -142,7 +141,7 @@ export function useEventsWebSocket(options: UseEventsWebSocketOptions = {}) {
     // Send initial subscription message with propertyId if specified
     if (isConnected && propertyId) {
       sendMessage({
-        type: 'subscribe',
+        type: 'subscribe' as any,
         payload: { propertyId },
       });
     }

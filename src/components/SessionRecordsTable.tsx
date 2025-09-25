@@ -28,6 +28,7 @@ import {
   Hotel as HotelIcon,
 } from '@mui/icons-material';
 import { Session, SESSION_STATUS_COLORS } from '../types';
+import { safeArray, safeObject } from '../utils/typeGuards';
 import { format } from 'date-fns';
 import { useEventsWebSocket } from '../hooks/useEventsWebSocket';
 import { useActiveSessions } from '../hooks/useEventsApi';
@@ -92,14 +93,15 @@ export const SessionRecordsTable: React.FC<SessionRecordsTableProps> = ({
   });
 
   // Determine which sessions to display
-  const sessions = useMemo(() => {
+  const sessions = useMemo((): Session[] => {
     if (useAnalytics && analyticsData) {
-      return analyticsData.sessions || [];
+      const safeData = safeObject(analyticsData);
+      return safeArray<Session>(safeData.sessions);
     }
     if (useRealtime && realtimeSessions) {
-      return localSessions.length > 0 ? localSessions : realtimeSessions;
+      return localSessions.length > 0 ? localSessions : safeArray<Session>(realtimeSessions);
     }
-    return propSessions || [];
+    return safeArray<Session>(propSessions);
   }, [useAnalytics, analyticsData, useRealtime, realtimeSessions, localSessions, propSessions]);
 
   const loading = useAnalytics ? analyticsLoading : (useRealtime ? realtimeLoading : propLoading);
@@ -107,12 +109,12 @@ export const SessionRecordsTable: React.FC<SessionRecordsTableProps> = ({
   // Update local sessions when real-time data changes
   useEffect(() => {
     if (useRealtime && realtimeSessions) {
-      setLocalSessions(realtimeSessions);
+      setLocalSessions(safeArray<Session>(realtimeSessions));
     }
   }, [useRealtime, realtimeSessions]);
 
   // Filter sessions based on search term
-  const filteredSessions = sessions.filter(session => 
+  const filteredSessions = sessions.filter((session) =>
     session.destination.toLowerCase().includes(searchTerm.toLowerCase()) ||
     session.hotel.toLowerCase().includes(searchTerm.toLowerCase()) ||
     session.sessionId.toLowerCase().includes(searchTerm.toLowerCase())

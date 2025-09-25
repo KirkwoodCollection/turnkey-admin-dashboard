@@ -10,14 +10,12 @@ import {
   IconButton,
   Collapse,
   Avatar,
-  Divider,
   Button,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   Grid,
-  Alert,
 } from '@mui/material';
 import {
   Timeline,
@@ -34,7 +32,6 @@ import {
   PersonRounded,
   CheckCircleRounded,
   ErrorRounded,
-  WarningRounded,
   InfoRounded,
   LaunchRounded,
 } from '@mui/icons-material';
@@ -224,19 +221,24 @@ export const UserJourney: React.FC<UserJourneyProps> = ({
                 <TimelineItem key={event.eventId}>
                   <TimelineSeparator>
                     <Tooltip title={`${event.metadata.label} - ${event.metadata.description}`}>
-                      <TimelineDot 
-                        sx={{ 
-                          bgcolor: event.metadata.color,
-                          border: event.metadata.importance === 'critical' ? 3 : 1,
-                          borderColor: event.metadata.importance === 'critical' ? 'warning.main' : 'grey.300',
+                      <Box
+                        sx={{
                           cursor: 'pointer',
                           '&:hover': { transform: 'scale(1.2)' },
                           transition: 'transform 0.2s'
                         }}
                         onClick={() => setSelectedEvent(event)}
                       >
-                        {getEventIcon(event.metadata.icon)}
-                      </TimelineDot>
+                        <TimelineDot
+                          sx={{
+                            bgcolor: event.metadata.color,
+                            border: event.metadata.importance === 'critical' ? 3 : 1,
+                            borderColor: event.metadata.importance === 'critical' ? 'warning.main' : 'grey.300',
+                          }}
+                        >
+                          {getEventIcon(event.metadata.icon)}
+                        </TimelineDot>
+                      </Box>
                     </Tooltip>
                     {index < journeyEvents.length - 1 && (
                       <TimelineConnector sx={{ 

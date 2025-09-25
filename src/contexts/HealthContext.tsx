@@ -67,7 +67,7 @@ export const HealthProvider: React.FC<HealthProviderProps> = ({
     lastWebSocketUpdate,
     isConnected,
   } = useSystemHealth({
-    refetchInterval: autoRefresh ? refreshInterval : false,
+    refetchInterval: autoRefresh === true ? refreshInterval : undefined,
     enabled: true,
   });
 

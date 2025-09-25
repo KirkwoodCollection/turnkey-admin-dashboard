@@ -1,4 +1,4 @@
-import { Session, Event, EventType } from './index';
+import { Session, Event } from './index';
 
 // Base WebSocket message structure
 export interface BaseWebSocketMessage {

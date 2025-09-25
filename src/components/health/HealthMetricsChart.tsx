@@ -36,7 +36,7 @@ import {
   BarChart,
   Bar,
 } from 'recharts';
-import { HealthHistoryPoint, SystemMetrics, HEALTH_STATUS_COLORS } from '../../types';
+import { HealthHistoryPoint, SystemMetrics } from '../../types';
 
 interface HealthMetricsChartProps {
   healthHistory: HealthHistoryPoint[];
@@ -273,7 +273,14 @@ export const HealthMetricsChart: React.FC<HealthMetricsChartProps> = ({
         );
 
       default:
-        return null;
+        return (
+          <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
+            <Typography variant="h6">Unsupported chart type</Typography>
+            <Typography variant="body2">
+              The selected chart type is not supported
+            </Typography>
+          </Box>
+        );
     }
   };
 

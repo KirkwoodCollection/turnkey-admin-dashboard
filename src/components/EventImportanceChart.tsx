@@ -18,13 +18,10 @@ import {
   YAxis,
   CartesianGrid,
   ResponsiveContainer,
-  LineChart,
-  Line,
-  Area,
-  AreaChart,
   Cell,
   PieChart,
   Pie,
+  Tooltip as RechartsTooltip,
 } from 'recharts';
 import {
   PriorityHighRounded,
@@ -85,7 +82,6 @@ const IMPORTANCE_CONFIG = {
 
 export const EventImportanceChart: React.FC<EventImportanceChartProps> = ({
   events,
-  showTrends = true,
   height = 300,
 }) => {
   const importanceData = useMemo(() => {
@@ -175,9 +171,6 @@ export const EventImportanceChart: React.FC<EventImportanceChartProps> = ({
     };
   }, [importanceData, events.length]);
 
-  const getImportanceIcon = (importance: string) => {
-    return IMPORTANCE_CONFIG[importance as keyof typeof IMPORTANCE_CONFIG]?.icon || <InfoRounded />;
-  };
 
   return (
     <Card>
@@ -213,12 +206,7 @@ export const EventImportanceChart: React.FC<EventImportanceChartProps> = ({
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="importance" />
                   <YAxis />
-                  <Tooltip
-                    formatter={(value: number, name: string) => [
-                      `${value.toLocaleString()}`,
-                      'Events'
-                    ]}
-                  />
+                  <RechartsTooltip />
                   <Bar dataKey="count" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -245,9 +233,7 @@ export const EventImportanceChart: React.FC<EventImportanceChartProps> = ({
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip
-                    formatter={(value: number) => [`${value.toLocaleString()}`, 'Events']}
-                  />
+                  <RechartsTooltip />
                 </PieChart>
               </ResponsiveContainer>
             </Box>

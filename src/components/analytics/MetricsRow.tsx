@@ -22,6 +22,7 @@ import {
 } from '@mui/icons-material';
 import { useTopMetrics } from '../../hooks/useAnalyticsData';
 import { TimeRange } from '../../services/analyticsApi';
+import { safeObject, getMetricsValue } from '../../utils/typeGuards';
 
 interface MetricsRowProps {
   timeRange: TimeRange;
@@ -63,13 +64,13 @@ const MetricCard: React.FC<MetricCardProps> = ({
   };
 
   const getTrendIcon = () => {
-    if (trend === undefined) return null;
+    if (trend === undefined) return <TrendingUp sx={{ fontSize: 16 }} />;
     if (trend > 0) {
       return <TrendingUp sx={{ fontSize: 16, color: 'success.main' }} />;
     } else if (trend < 0) {
       return <TrendingDown sx={{ fontSize: 16, color: 'error.main' }} />;
     }
-    return null;
+    return <TrendingUp sx={{ fontSize: 16, color: 'info.main' }} />;
   };
 
   const getTrendColor = () => {
@@ -146,6 +147,7 @@ export const MetricsRow: React.FC<MetricsRowProps> = ({
   onRefresh,
 }) => {
   const { data: metrics, isLoading, error, refetch } = useTopMetrics(timeRange, propertyId);
+  const metricsData = safeObject(metrics);
 
   const handleRefresh = () => {
     refetch();
@@ -155,7 +157,7 @@ export const MetricsRow: React.FC<MetricsRowProps> = ({
   const metricsConfig = [
     {
       title: 'Active Users',
-      value: metrics?.activeUsers ?? 0,
+      value: getMetricsValue(metricsData, 'activeUsers', 0),
       unit: '',
       icon: <People />,
       color: 'primary' as const,
@@ -163,7 +165,7 @@ export const MetricsRow: React.FC<MetricsRowProps> = ({
     },
     {
       title: 'Total Searches',
-      value: metrics?.totalSearches ?? 0,
+      value: getMetricsValue(metricsData, 'totalSearches', 0),
       unit: '',
       icon: <Search />,
       color: 'info' as const,
@@ -171,7 +173,7 @@ export const MetricsRow: React.FC<MetricsRowProps> = ({
     },
     {
       title: 'Lead Time',
-      value: metrics?.leadTime ?? 0,
+      value: getMetricsValue(metricsData, 'leadTime', 0),
       unit: 'hrs',
       icon: <Schedule />,
       color: 'warning' as const,
@@ -179,7 +181,7 @@ export const MetricsRow: React.FC<MetricsRowProps> = ({
     },
     {
       title: 'Book Rate',
-      value: metrics?.bookRate ?? 0,
+      value: getMetricsValue(metricsData, 'bookRate', 0),
       unit: '%',
       icon: <CheckCircle />,
       color: 'success' as const,
@@ -187,7 +189,7 @@ export const MetricsRow: React.FC<MetricsRowProps> = ({
     },
     {
       title: 'Live to Book',
-      value: metrics?.liveToBookRate ?? 0,
+      value: getMetricsValue(metricsData, 'liveToBookRate', 0),
       unit: '%',
       icon: <Speed />,
       color: 'secondary' as const,
@@ -195,7 +197,7 @@ export const MetricsRow: React.FC<MetricsRowProps> = ({
     },
     {
       title: 'Search Duration',
-      value: Math.round((metrics?.avgSearchDuration ?? 0) / 60),
+      value: Math.round(getMetricsValue(metricsData, 'avgSearchDuration', 0) / 60),
       unit: 'min',
       icon: <Schedule />,
       color: 'info' as const,

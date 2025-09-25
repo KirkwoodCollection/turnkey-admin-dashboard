@@ -53,6 +53,24 @@ export const AnalyticsEventSchema = z.object({
 
 export type AnalyticsEvent = z.infer<typeof AnalyticsEventSchema>;
 
+// Generic CustomEvent type for WebSocket and component usage
+export interface CustomEvent {
+  id: string;
+  type: string;
+  timestamp: string;
+  data: Record<string, any>;
+  metadata?: {
+    originalEventType: string;
+    icon: string;
+    color: string;
+    importance: 'low' | 'medium' | 'high' | 'critical';
+    category: string;
+  };
+}
+
+// Alias for backwards compatibility with files expecting Event type
+export type Event = CustomEvent;
+
 export interface DashboardMetrics {
   activeUsers: number;
   totalSearches: number;
@@ -81,10 +99,17 @@ export interface DashboardMetrics {
 }
 
 export interface WebSocketMessage {
-  type: 'SESSION_UPDATE' | 'NEW_EVENT' | 'METRICS_UPDATE' | 'USER_COUNT' | 'HEALTH_UPDATE' | 'ERROR' | 'PING' | 'PONG';
+  type: 'SESSION_UPDATE' | 'NEW_EVENT' | 'METRICS_UPDATE' | 'USER_COUNT' | 'HEALTH_UPDATE' | 'ERROR' | 'PING' | 'PONG' | 'analytics.metrics.updated' | 'session.updated';
   payload: unknown;
   timestamp: string;
   id: string; // For deduplication
+  metadata?: {
+    originalEventType: string;
+    icon: string;
+    color: string;
+    importance: 'low' | 'medium' | 'high' | 'critical';
+    category: string;
+  };
 }
 
 export interface FunnelStage {
@@ -260,9 +285,17 @@ export enum EventType {
   // Booking Process Events
   ROOM_BOOKING_INITIATED = "room_booking_initiated",
   PAYMENT_METHOD_SELECTED = "payment_method_selected",
-  PAYMENT_DETAILS_COMPLETED = "payment_details_completed", 
+  PAYMENT_DETAILS_COMPLETED = "payment_details_completed",
   GUEST_DETAILS_COMPLETED = "guest_details_completed",
-  RESERVATION_CONFIRMED = "reservation_confirmed"
+  RESERVATION_CONFIRMED = "reservation_confirmed",
+
+  // Additional events for compatibility
+  BOOKING_CONFIRMED = "booking_confirmed",
+  BOOKING_COMPLETED = "booking_completed",
+  BOOKING_ENGINE_OPENED = "booking_engine_opened",
+  SEARCH_PERFORMED = "search_performed",
+  HOTEL_SELECTED = "hotel_selected",
+  ROOM_SELECTED = "room_selected"
 }
 
 // Event categorization for UI organization
@@ -541,6 +574,54 @@ export const EVENT_METADATA: Record<EventType, {
     color: '#4caf50',
     category: 'booking_process',
     importance: 'critical'
+  },
+  [EventType.BOOKING_CONFIRMED]: {
+    label: 'Booking Confirmed',
+    description: 'Booking confirmed by user',
+    icon: 'check_circle',
+    color: '#4caf50',
+    category: 'booking_process',
+    importance: 'critical'
+  },
+  [EventType.BOOKING_COMPLETED]: {
+    label: 'Booking Completed',
+    description: 'Booking process completed',
+    icon: 'done_all',
+    color: '#4caf50',
+    category: 'booking_process',
+    importance: 'critical'
+  },
+  [EventType.BOOKING_ENGINE_OPENED]: {
+    label: 'Booking Engine Opened',
+    description: 'Booking engine interface opened',
+    icon: 'open_in_browser',
+    color: '#2196f3',
+    category: 'widget_lifecycle',
+    importance: 'high'
+  },
+  [EventType.SEARCH_PERFORMED]: {
+    label: 'Search Performed',
+    description: 'User performed a search',
+    icon: 'search',
+    color: '#9c27b0',
+    category: 'search_modification',
+    importance: 'medium'
+  },
+  [EventType.HOTEL_SELECTED]: {
+    label: 'Hotel Selected',
+    description: 'User selected a hotel',
+    icon: 'hotel',
+    color: '#ff9800',
+    category: 'selection_viewing',
+    importance: 'high'
+  },
+  [EventType.ROOM_SELECTED]: {
+    label: 'Room Selected',
+    description: 'User selected a room',
+    icon: 'bed',
+    color: '#ff9800',
+    category: 'selection_viewing',
+    importance: 'high'
   }
 };
 

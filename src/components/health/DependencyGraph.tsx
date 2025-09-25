@@ -16,7 +16,6 @@ import {
 import {
   AccountTreeRounded,
   InfoRounded,
-  WarningRounded,
   ZoomInRounded,
   ZoomOutRounded,
   CenterFocusStrongRounded,
@@ -108,12 +107,10 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({
     // Calculate levels for all services
     Array.from(allServices).forEach(service => calculateLevel(service));
 
-    const maxLevel = Math.max(...Array.from(serviceLevels.values()));
     const levelWidth = 300;
     const nodeHeight = 60;
 
     // Position nodes
-    const levelCounts = new Map<number, number>();
     Array.from(allServices).forEach(serviceName => {
       const level = serviceLevels.get(serviceName) || 0;
       const status = serviceHealthMap[serviceName] || 'unhealthy';

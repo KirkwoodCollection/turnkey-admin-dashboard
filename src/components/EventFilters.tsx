@@ -337,7 +337,7 @@ export const EventFilters: React.FC<EventFiltersProps> = ({
           </AccordionSummary>
           <AccordionDetails>
             <FormGroup>
-              {Object.entries(EVENT_CATEGORIES).map(([category, events]) => (
+              {Object.entries(EVENT_CATEGORIES).map(([category, _events]) => (
                 <FormControlLabel
                   key={category}
                   control={

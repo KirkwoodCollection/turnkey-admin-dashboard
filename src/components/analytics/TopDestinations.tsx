@@ -21,7 +21,8 @@ import {
   TrendingUp,
 } from '@mui/icons-material';
 import { useTopDestinations } from '../../hooks/useAnalyticsData';
-import { TimeRange } from '../../services/analyticsApi';
+import { TimeRange, TopDestination } from '../../services/analyticsApi';
+import { safeArray } from '../../utils/typeGuards';
 
 interface TopDestinationsProps {
   timeRange: TimeRange;
@@ -66,7 +67,7 @@ const DestinationItem: React.FC<DestinationItemProps> = ({
 
   return (
     <ListItem
-      button={onClick ? true : false}
+      component={onClick ? 'div' : 'div'}
       onClick={onClick}
       sx={{
         px: 0,
@@ -153,13 +154,14 @@ export const TopDestinations: React.FC<TopDestinationsProps> = ({
   limit = 10,
   onDestinationClick,
 }) => {
-  const { data: destinations, isLoading, error, refetch } = useTopDestinations(
+  const { data: destinationsResponse, isLoading, error, refetch } = useTopDestinations(
     timeRange,
     limit,
     propertyId
   );
 
-  const maxCount = destinations?.[0]?.count ?? 0;
+  const destinations = safeArray<TopDestination>(destinationsResponse);
+  const maxCount = destinations[0]?.count ?? 0;
 
   const handleRefresh = () => {
     refetch();

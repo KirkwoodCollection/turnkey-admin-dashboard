@@ -1,12 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   analyticsApi,
-  TopMetrics,
-  FunnelStage,
-  TopDestination,
-  TopHotel,
-  HeatmapDataPoint,
-  AnalyticsSession,
   TimeRange
 } from '../services/analyticsApi';
 
@@ -27,7 +21,7 @@ export function useTopMetrics(timeRange: TimeRange = '24h', propertyId?: string)
     queryKey: ANALYTICS_QUERY_KEYS.topMetrics(timeRange, propertyId),
     queryFn: () => analyticsApi.getTopMetrics(timeRange, propertyId),
     staleTime: 30 * 1000, // 30 seconds
-    cacheTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 60 * 1000, // Refetch every minute
   });
 }
@@ -38,7 +32,7 @@ export function useFunnelData(timeRange: TimeRange = '24h', propertyId?: string)
     queryKey: ANALYTICS_QUERY_KEYS.funnelData(timeRange, propertyId),
     queryFn: () => analyticsApi.getFunnelData(timeRange, propertyId),
     staleTime: 60 * 1000, // 1 minute
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 }
 
@@ -48,7 +42,7 @@ export function useTopDestinations(timeRange: TimeRange = '24h', limit = 10, pro
     queryKey: ANALYTICS_QUERY_KEYS.topDestinations(timeRange, limit, propertyId),
     queryFn: () => analyticsApi.getTopDestinations(timeRange, limit, propertyId),
     staleTime: 2 * 60 * 1000, // 2 minutes
-    cacheTime: 15 * 60 * 1000, // 15 minutes
+    gcTime: 15 * 60 * 1000, // 15 minutes
   });
 }
 
@@ -58,7 +52,7 @@ export function useTopHotels(timeRange: TimeRange = '24h', limit = 10, propertyI
     queryKey: ANALYTICS_QUERY_KEYS.topHotels(timeRange, limit, propertyId),
     queryFn: () => analyticsApi.getTopHotels(timeRange, limit, propertyId),
     staleTime: 2 * 60 * 1000, // 2 minutes
-    cacheTime: 15 * 60 * 1000, // 15 minutes
+    gcTime: 15 * 60 * 1000, // 15 minutes
   });
 }
 
@@ -71,10 +65,16 @@ export function useAnalyticsSessions(
 ) {
   return useQuery({
     queryKey: ANALYTICS_QUERY_KEYS.sessions(timeRange, limit, offset, propertyId),
-    queryFn: () => analyticsApi.getSessions(timeRange, limit, offset, propertyId),
+    queryFn: () => analyticsApi.getSessions(
+      Math.floor(offset / limit) + 1,
+      limit,
+      undefined, // status filter
+      undefined, // destination filter
+      propertyId
+    ),
     staleTime: 30 * 1000, // 30 seconds
-    cacheTime: 5 * 60 * 1000, // 5 minutes
-    keepPreviousData: true, // For pagination
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    placeholderData: (previousData) => previousData, // For pagination
   });
 }
 
@@ -84,7 +84,7 @@ export function useHeatmapData(timeRange: TimeRange = '7d', propertyId?: string)
     queryKey: ANALYTICS_QUERY_KEYS.heatmap(timeRange, propertyId),
     queryFn: () => analyticsApi.getHeatmapData(timeRange, propertyId),
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 30 * 60 * 1000, // 30 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
   });
 }
 
@@ -94,7 +94,7 @@ export function useRealtimeAnalyticsMetrics(propertyId?: string) {
     queryKey: ANALYTICS_QUERY_KEYS.realtimeMetrics(propertyId),
     queryFn: () => analyticsApi.getRealtimeMetrics(propertyId),
     staleTime: 5 * 1000, // 5 seconds for real-time
-    cacheTime: 1 * 60 * 1000, // 1 minute
+    gcTime: 1 * 60 * 1000, // 1 minute
     refetchInterval: 10 * 1000, // Refetch every 10 seconds
   });
 }
@@ -126,34 +126,33 @@ export function useInvalidateAnalytics() {
   return {
     invalidateTopMetrics: (timeRange?: TimeRange, propertyId?: string) => {
       if (timeRange && propertyId !== undefined) {
-        queryClient.invalidateQueries(ANALYTICS_QUERY_KEYS.topMetrics(timeRange, propertyId));
+        queryClient.invalidateQueries({ queryKey: ANALYTICS_QUERY_KEYS.topMetrics(timeRange, propertyId) });
       } else {
-        queryClient.invalidateQueries(['analytics', 'topMetrics']);
+        queryClient.invalidateQueries({ queryKey: ['analytics', 'topMetrics'] });
       }
     },
     invalidateFunnel: (timeRange?: TimeRange, propertyId?: string) => {
       if (timeRange && propertyId !== undefined) {
-        queryClient.invalidateQueries(ANALYTICS_QUERY_KEYS.funnelData(timeRange, propertyId));
+        queryClient.invalidateQueries({ queryKey: ANALYTICS_QUERY_KEYS.funnelData(timeRange, propertyId) });
       } else {
-        queryClient.invalidateQueries(['analytics', 'funnel']);
+        queryClient.invalidateQueries({ queryKey: ['analytics', 'funnel'] });
       }
     },
-    invalidateTopLists: (propertyId?: string) => {
-      queryClient.invalidateQueries(['analytics', 'topDestinations']);
-      queryClient.invalidateQueries(['analytics', 'topHotels']);
+    invalidateTopLists: (_propertyId?: string) => {
+      queryClient.invalidateQueries({ queryKey: ['analytics', 'topDestinations'] });
+      queryClient.invalidateQueries({ queryKey: ['analytics', 'topHotels'] });
     },
     invalidateRealtime: (propertyId?: string) => {
-      queryClient.invalidateQueries(ANALYTICS_QUERY_KEYS.realtimeMetrics(propertyId));
+      queryClient.invalidateQueries({ queryKey: ANALYTICS_QUERY_KEYS.realtimeMetrics(propertyId) });
     },
     invalidateAll: () => {
-      queryClient.invalidateQueries(['analytics']);
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
     },
   };
 }
 
 // Export functionality hook
 export function useExportAnalytics() {
-  const queryClient = useQueryClient();
 
   const exportData = async (
     timeRange: TimeRange,
@@ -161,7 +160,8 @@ export function useExportAnalytics() {
     propertyId?: string
   ) => {
     try {
-      const blob = await analyticsApi.exportData(timeRange, format, propertyId);
+      const response = await analyticsApi.exportData(format, 'sessions', undefined, undefined, { propertyId });
+      const blob = response instanceof Blob ? response : new Blob([JSON.stringify(response)], { type: 'application/json' });
 
       // Create download link
       const url = window.URL.createObjectURL(blob);

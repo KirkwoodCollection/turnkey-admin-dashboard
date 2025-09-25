@@ -26,7 +26,6 @@ import {
   TrendingUp,
   AccessTime,
   Person,
-  LocationOn,
   Event as EventIcon,
   PlayArrow,
   Pause,
@@ -36,6 +35,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { Event, EventType, Session } from '../types';
 import { useEventsWebSocket } from '../hooks/useEventsWebSocket';
 import { useRealtimeMetrics } from '../hooks/useEventsApi';
+import { safeObject, getMetricsValue } from '../utils/typeGuards';
 
 interface ActivityItem {
   id: string;
@@ -66,7 +66,8 @@ export const LiveActivityFeed: React.FC<LiveActivityFeedProps> = ({
   const listRef = useRef<HTMLDivElement>(null);
 
   // Real-time metrics
-  const { data: metrics } = useRealtimeMetrics(propertyId);
+  const { data: metricsResponse } = useRealtimeMetrics(propertyId);
+  const metrics = safeObject(metricsResponse);
 
   // WebSocket connection
   const { isConnected } = useEventsWebSocket({
@@ -91,13 +92,13 @@ export const LiveActivityFeed: React.FC<LiveActivityFeedProps> = ({
       if (isPaused) return;
       
       const activity: ActivityItem = {
-        id: `event-${event.eventId}-${Date.now()}`,
+        id: `event-${event.id}-${Date.now()}`,
         timestamp: event.timestamp,
-        type: getActivityType(event.eventType),
-        title: getEventTitle(event.eventType),
+        type: getActivityType(event.type as EventType),
+        title: getEventTitle(event.type as EventType),
         description: getEventDescription(event),
-        icon: getEventIcon(event.eventType),
-        color: getEventColor(event.eventType),
+        icon: getEventIcon(event.type as EventType),
+        color: getEventColor(event.type as EventType),
         metadata: { event, sessionId },
       };
       
@@ -164,20 +165,20 @@ export const LiveActivityFeed: React.FC<LiveActivityFeedProps> = ({
           <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
             <Chip
               icon={<Person />}
-              label={`${metrics.activeSessions} active`}
+              label={`${getMetricsValue(metrics, 'activeSessions', 0)} active`}
               size="small"
               color="success"
               variant="outlined"
             />
             <Chip
               icon={<AccessTime />}
-              label={`${metrics.sessionsLastHour} /hr`}
+              label={`${getMetricsValue(metrics, 'sessionsLastHour', 0)} /hr`}
               size="small"
               variant="outlined"
             />
             <Chip
               icon={<TrendingUp />}
-              label={`${metrics.eventsLastMinute} events/min`}
+              label={`${getMetricsValue(metrics, 'eventsLastMinute', 0)} events/min`}
               size="small"
               variant="outlined"
             />
@@ -340,17 +341,16 @@ function getEventTitle(eventType: EventType): string {
 }
 
 function getEventDescription(event: Event): string {
-  const metadata = event.metadata || {};
   
-  switch (event.eventType) {
+  switch (event.type as EventType) {
     case EventType.SEARCH_PERFORMED:
-      return `Searching ${metadata.destination || 'hotels'}`;
+      return `Searching ${getMetricsValue(event.data, 'destination', 'hotels')}`;
     case EventType.HOTEL_SELECTED:
-      return metadata.hotelName || 'Hotel selected';
+      return getMetricsValue(event.data, 'hotelName', 'Hotel selected');
     case EventType.ROOM_SELECTED:
-      return metadata.roomType || 'Room selected';
+      return getMetricsValue(event.data, 'roomType', 'Room selected');
     default:
-      return metadata.description || '';
+      return getMetricsValue(event.data, 'description', '');
   }
 }
 

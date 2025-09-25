@@ -12,7 +12,6 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  Collapse,
   Alert,
   IconButton,
   Tooltip,
@@ -28,10 +27,7 @@ import {
   RefreshRounded,
   CheckCircleRounded,
   ErrorRounded,
-  WarningRounded,
   TimerRounded,
-  ExpandMoreRounded,
-  ExpandLessRounded,
   InfoRounded,
   BugReportRounded,
 } from '@mui/icons-material';
@@ -52,21 +48,7 @@ export const IntegrationTestRunner: React.FC<IntegrationTestRunnerProps> = ({
   onRefresh,
   disabled = false,
 }) => {
-  const [expandedTests, setExpandedTests] = useState<Set<string>>(new Set());
   const [selectedTest, setSelectedTest] = useState<IntegrationTestResult | null>(null);
-  const [autoRefresh, setAutoRefresh] = useState(false);
-
-  const toggleTestExpanded = (testName: string) => {
-    setExpandedTests(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(testName)) {
-        newSet.delete(testName);
-      } else {
-        newSet.add(testName);
-      }
-      return newSet;
-    });
-  };
 
   const getStatusIcon = (status: IntegrationTestResult['status']) => {
     switch (status) {
@@ -112,18 +94,16 @@ export const IntegrationTestRunner: React.FC<IntegrationTestRunnerProps> = ({
 
   // Auto-refresh when running
   useEffect(() => {
-    if (!isRunning || !autoRefresh || !onRefresh) return;
+    if (!isRunning || !onRefresh) return;
 
     const interval = setInterval(() => {
       onRefresh();
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [isRunning, autoRefresh, onRefresh]);
+  }, [isRunning, onRefresh]);
 
   const runningTests = testSuite?.tests.filter(t => t.status === 'running') || [];
-  const passedTests = testSuite?.tests.filter(t => t.status === 'passed') || [];
-  const failedTests = testSuite?.tests.filter(t => t.status === 'failed') || [];
 
   return (
     <>

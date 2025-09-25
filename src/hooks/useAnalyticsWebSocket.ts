@@ -65,12 +65,6 @@ interface SessionsUpdateMessage extends AnalyticsWebSocketMessage {
   };
 }
 
-type AnalyticsMessage =
-  | MetricsUpdateMessage
-  | FunnelUpdateMessage
-  | TopListsUpdateMessage
-  | SessionsUpdateMessage;
-
 interface UseAnalyticsWebSocketOptions {
   onMetricsUpdate?: (metrics: MetricsUpdateMessage['payload']) => void;
   onFunnelUpdate?: (funnel: FunnelUpdateMessage['payload']) => void;
@@ -155,7 +149,7 @@ export function useAnalyticsWebSocket(options: UseAnalyticsWebSocketOptions = {}
       if (isSessionsUpdate(message)) {
         // Update sessions cache
         if (autoInvalidateQueries) {
-          queryClient.invalidateQueries(['analytics', 'sessions']);
+          queryClient.invalidateQueries({ queryKey: ['analytics', 'sessions'] });
         }
 
         // Call custom handler
@@ -192,7 +186,7 @@ export function useAnalyticsWebSocket(options: UseAnalyticsWebSocketOptions = {}
     // Send initial subscription message with propertyId if specified
     if (isConnected && propertyId) {
       sendMessage({
-        type: 'analytics.subscribe',
+        type: 'analytics.subscribe' as any,
         payload: { propertyId },
       });
     }
@@ -206,7 +200,7 @@ export function useAnalyticsWebSocket(options: UseAnalyticsWebSocketOptions = {}
   useEffect(() => {
     if (isConnected && propertyId) {
       sendMessage({
-        type: 'analytics.subscribe',
+        type: 'analytics.subscribe' as any,
         payload: { propertyId },
       });
     }

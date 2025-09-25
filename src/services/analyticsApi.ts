@@ -1,4 +1,4 @@
-import { apiClient } from '../api/client';
+// import { apiClient } from '../api/client'; // Commented until needed
 
 const ANALYTICS_API_BASE = process.env.REACT_APP_ANALYTICS_API_URL || 'http://localhost:8001/api/v1';
 

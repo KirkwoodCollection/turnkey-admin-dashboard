@@ -39,9 +39,8 @@ interface LayoutProps {
   currentPage?: 'overview' | 'system-health' | 'analytics';
 }
 
-export const Layout: React.FC<LayoutProps> = ({ 
-  children, 
-  currentPage = 'overview'
+export const Layout: React.FC<LayoutProps> = ({
+  children
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -91,7 +90,11 @@ export const Layout: React.FC<LayoutProps> = ({
   };
 
   // Determine current page from location
-  const actualCurrentPage = location.pathname === '/system-health' ? 'system-health' : 'overview';
+  const actualCurrentPage = location.pathname === '/system-health'
+    ? 'system-health'
+    : location.pathname.startsWith('/analytics')
+    ? 'analytics'
+    : 'overview';
 
   const getConnectionStatus = () => {
     if (isConnected) {

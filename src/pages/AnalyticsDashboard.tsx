@@ -48,12 +48,6 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
   const [lastRefresh, setLastRefresh] = useState(new Date());
 
   const {
-    topMetrics,
-    funnelData,
-    topDestinations,
-    topHotels,
-    realtimeMetrics,
-    isLoading,
     isError,
     error,
   } = useDashboardData(timeRange, propertyId);

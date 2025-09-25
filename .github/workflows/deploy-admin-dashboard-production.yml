@@ -38,8 +38,7 @@ jobs:
 
       - name: Run type checking
         working-directory: .
-        run: npm run type-check || echo "Type checking completed with warnings - continuing deployment"
-        continue-on-error: true
+        run: npm run type-check
 
       - name: Run unit tests
         working-directory: .

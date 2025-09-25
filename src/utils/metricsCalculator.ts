@@ -220,7 +220,6 @@ export const metricsCalculator = {
   } {
     if (!events || events.length === 0) return { rate: 0, totalSessions: 0, conversions: 0 };
 
-    const sessionIds = new Set(events.map(e => e.sessionId));
     const sessionsWithWidget = new Set(
       events.filter(e => e.eventType === EventType.WIDGET_INITIALIZED).map(e => e.sessionId)
     );
@@ -259,7 +258,7 @@ export const metricsCalculator = {
     // Group events by category
     events.forEach(event => {
       for (const [category, categoryEvents] of Object.entries(EVENT_CATEGORIES)) {
-        if (categoryEvents.includes(event.eventType as EventType)) {
+        if (categoryEvents.some(eventType => eventType === event.eventType)) {
           if (!categoryStats.has(category)) {
             categoryStats.set(category, { events: [], uniqueUsers: new Set() });
           }

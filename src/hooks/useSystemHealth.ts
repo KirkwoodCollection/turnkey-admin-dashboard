@@ -2,13 +2,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 import { useWebSocketContext } from '../contexts/WebSocketContext';
 import { systemHealthApi } from '../api/systemHealth';
-import type { 
-  SystemHealthResponse, 
-  HealthHistoryPoint, 
-  ServiceDependency, 
-  IntegrationTestSuite,
+import type {
+  SystemHealthResponse,
   ServiceHealthStatus,
-  SystemMetrics,
   HealthDashboardState
 } from '../types';
 

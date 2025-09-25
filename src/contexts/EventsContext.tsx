@@ -78,7 +78,9 @@ export const EventsProvider: React.FC<EventsProviderProps> = ({
         // Limit history size
         if (updated.size > maxHistorySize) {
           const firstKey = updated.keys().next().value;
-          updated.delete(firstKey);
+          if (firstKey !== undefined) {
+            updated.delete(firstKey);
+          }
         }
         
         return updated;
@@ -116,12 +118,12 @@ export const EventsProvider: React.FC<EventsProviderProps> = ({
 
   // Initialize active sessions from API
   useEffect(() => {
-    if (fetchedSessions && localActiveSessions.length === 0) {
+    if (fetchedSessions && Array.isArray(fetchedSessions) && localActiveSessions.length === 0) {
       setLocalActiveSessions(fetchedSessions);
-      
+
       // Add to session history
       const historyUpdate = new Map(sessionHistory);
-      fetchedSessions.forEach(session => {
+      fetchedSessions.forEach((session: Session) => {
         historyUpdate.set(session.sessionId, session);
       });
       setSessionHistory(historyUpdate);
@@ -129,9 +131,9 @@ export const EventsProvider: React.FC<EventsProviderProps> = ({
   }, [fetchedSessions]);
 
   // Determine active sessions (prefer local state for real-time updates)
-  const activeSessions = localActiveSessions.length > 0 
-    ? localActiveSessions 
-    : (fetchedSessions || []);
+  const activeSessions = localActiveSessions.length > 0
+    ? localActiveSessions
+    : (Array.isArray(fetchedSessions) ? fetchedSessions : []);
 
   // Helper methods
   const getSessionEvents = (sessionId: string): Event[] => {
@@ -151,7 +153,7 @@ export const EventsProvider: React.FC<EventsProviderProps> = ({
     sessionHistory,
     recentEvents,
     eventsBySession,
-    metrics: metrics || null,
+    metrics: (metrics && typeof metrics === 'object' && 'activeSessions' in metrics) ? metrics : null,
     selectedPropertyId,
     setSelectedPropertyId,
     getSessionEvents,

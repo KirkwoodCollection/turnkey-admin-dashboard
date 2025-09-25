@@ -200,7 +200,7 @@ function getEventImportance(eventType: string): 'low' | 'medium' | 'high' | 'cri
 
 function getEventCategory(eventType: string): string {
   for (const [category, events] of Object.entries(EVENT_CATEGORIES)) {
-    if (events.includes(eventType as EventType)) {
+    if ((events as readonly string[]).includes(eventType)) {
       return category;
     }
   }

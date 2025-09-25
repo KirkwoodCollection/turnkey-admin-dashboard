@@ -73,10 +73,9 @@ interface TopStatsPanelProps {
   loading?: boolean;
 }
 
-export const TopStatsPanel: React.FC<TopStatsPanelProps> = ({ 
-  metrics, 
+export const TopStatsPanel: React.FC<TopStatsPanelProps> = ({
   activeUsers,
-  loading = false 
+  loading = false
 }) => {
   // Format numbers for display
   const formatNumber = (num: number | undefined): string => {
@@ -108,35 +107,35 @@ export const TopStatsPanel: React.FC<TopStatsPanelProps> = ({
     {
       icon: <Search sx={{ fontSize: 28 }} />,
       title: 'Total Searches',
-      value: formatNumber(metrics?.totalSearches),
+      value: formatNumber(0),
       subtitle: 'Today',
       color: '#9c27b0',
     },
     {
       icon: <TrendingUp sx={{ fontSize: 28 }} />,
       title: 'Conversion Rate',
-      value: `${metrics?.conversionRate?.toFixed(1) || 0}%`,
+      value: `${0?.toFixed(1) || 0}%`,
       subtitle: 'Bookings / Searches',
       color: '#4caf50',
     },
     {
       icon: <ExitToApp sx={{ fontSize: 28 }} />,
       title: 'Abandonment Rate',
-      value: `${metrics?.abandonmentRate?.toFixed(1) || 0}%`,
+      value: `${0?.toFixed(1) || 0}%`,
       subtitle: 'Sessions abandoned',
       color: '#ff9800',
     },
     {
       icon: <Schedule sx={{ fontSize: 28 }} />,
       title: 'Avg Session Time',
-      value: formatDuration(metrics?.averageSessionDuration),
+      value: formatDuration(0),
       subtitle: 'Per user',
       color: '#00bcd4',
     },
     {
       icon: <CalendarToday sx={{ fontSize: 28 }} />,
       title: 'Avg Lead Time',
-      value: `${metrics?.averageLeadTime || 0}d`,
+      value: `${0 || 0}d`,
       subtitle: 'Booking to check-in',
       color: '#ff5722',
     },

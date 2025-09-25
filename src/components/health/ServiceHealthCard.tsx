@@ -20,7 +20,6 @@ import {
   ErrorRounded,
   InfoRounded,
   TimerRounded,
-  MemoryRounded,
   SpeedRounded,
 } from '@mui/icons-material';
 import { ServiceHealthStatus, HEALTH_STATUS_COLORS, HEALTH_STATUS_LABELS } from '../../types';

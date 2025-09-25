@@ -8,7 +8,6 @@ import {
   IconButton,
   Tooltip,
   Chip,
-  Paper,
 } from '@mui/material';
 import {
   Refresh,
@@ -16,7 +15,8 @@ import {
   AccessTime,
 } from '@mui/icons-material';
 import { useHeatmapData } from '../../hooks/useAnalyticsData';
-import { TimeRange } from '../../services/analyticsApi';
+import { TimeRange, HeatmapDataPoint } from '../../services/analyticsApi';
+import { safeArray } from '../../utils/typeGuards';
 
 interface UserJourneyHeatmapProps {
   timeRange: TimeRange;
@@ -133,10 +133,12 @@ export const UserJourneyHeatmap: React.FC<UserJourneyHeatmapProps> = ({
   timeRange,
   propertyId,
 }) => {
-  const { data: heatmapData, isLoading, error, refetch } = useHeatmapData(timeRange, propertyId);
+  const { data: heatmapResponse, isLoading, error, refetch } = useHeatmapData(timeRange, propertyId);
+
+  const heatmapData = safeArray<HeatmapDataPoint>(heatmapResponse);
 
   const { gridData, maxValue, totalActivity } = useMemo(() => {
-    if (!heatmapData || heatmapData.length === 0) {
+    if (heatmapData.length === 0) {
       return { gridData: new Map(), maxValue: 0, totalActivity: 0 };
     }
 
@@ -145,7 +147,8 @@ export const UserJourneyHeatmap: React.FC<UserJourneyHeatmapProps> = ({
     let total = 0;
 
     heatmapData.forEach((point) => {
-      const key = `${point.day}-${point.hour}`;
+      // Map x (hour) and y (day) from the API response
+      const key = `${point.y}-${point.x}`;
       grid.set(key, point.value);
       max = Math.max(max, point.value);
       total += point.value;
@@ -225,7 +228,7 @@ export const UserJourneyHeatmap: React.FC<UserJourneyHeatmapProps> = ({
       <Box sx={{ flexGrow: 1, overflow: 'auto', px: 2, pb: 2 }}>
         {isLoading ? (
           <HeatmapSkeleton />
-        ) : heatmapData && heatmapData.length > 0 ? (
+        ) : heatmapData.length > 0 ? (
           <Box>
             <Box sx={{ display: 'flex', mb: 1, ml: 4 }}>
               {[0, 6, 12, 18].map((hour) => (
@@ -303,7 +306,7 @@ export const UserJourneyHeatmap: React.FC<UserJourneyHeatmapProps> = ({
         )}
       </Box>
 
-      {heatmapData && heatmapData.length > 0 && (
+      {heatmapData.length > 0 && (
         <Box sx={{ px: 2, pb: 2, borderTop: 1, borderColor: 'divider', pt: 1 }}>
           <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
             Click cells for detailed breakdown • Darker = more activity • Time: {timeRange}

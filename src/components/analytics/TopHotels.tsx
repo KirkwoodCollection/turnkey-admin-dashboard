@@ -24,7 +24,8 @@ import {
   Search as SearchIcon,
 } from '@mui/icons-material';
 import { useTopHotels } from '../../hooks/useAnalyticsData';
-import { TimeRange } from '../../services/analyticsApi';
+import { TimeRange, TopHotel } from '../../services/analyticsApi';
+import { safeArray } from '../../utils/typeGuards';
 
 interface TopHotelsProps {
   timeRange: TimeRange;
@@ -75,7 +76,7 @@ const HotelItem: React.FC<HotelItemProps> = ({
 
   return (
     <ListItem
-      button={onClick ? true : false}
+      component={onClick ? 'div' : 'div'}
       onClick={onClick}
       sx={{
         px: 0,
@@ -196,14 +197,15 @@ export const TopHotels: React.FC<TopHotelsProps> = ({
   limit = 10,
   onHotelClick,
 }) => {
-  const { data: hotels, isLoading, error, refetch } = useTopHotels(
+  const { data: hotelsResponse, isLoading, error, refetch } = useTopHotels(
     timeRange,
     limit,
     propertyId
   );
 
-  const maxSearches = hotels?.[0]?.searches ?? 0;
-  const totalBookings = hotels?.reduce((sum, hotel) => sum + hotel.bookings, 0) ?? 0;
+  const hotels = safeArray<TopHotel>(hotelsResponse);
+  const maxSearches = hotels[0]?.searches ?? 0;
+  const totalBookings = hotels.reduce((sum, hotel) => sum + hotel.bookings, 0);
 
   const handleRefresh = () => {
     refetch();

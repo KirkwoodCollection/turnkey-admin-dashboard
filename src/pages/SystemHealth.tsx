@@ -14,7 +14,6 @@ import {
   Switch,
   FormControlLabel,
   Paper,
-  Divider,
   Chip,
 } from '@mui/material';
 import {
@@ -43,7 +42,6 @@ export const SystemHealthDashboard: React.FC = () => {
     dependencies,
     integrationTests,
     systemMetrics,
-    dashboardState,
     overallHealthStatus,
     criticalServices,
     degradedServices,
@@ -58,7 +56,7 @@ export const SystemHealthDashboard: React.FC = () => {
     lastWebSocketUpdate,
     isConnected,
   } = useSystemHealth({
-    refetchInterval: autoRefresh ? 30000 : false,
+    refetchInterval: autoRefresh ? 30000 : undefined,
     historyHours: timeRange === '1h' ? 1 : timeRange === '6h' ? 6 : timeRange === '24h' ? 24 : 168,
   });
 
@@ -244,7 +242,7 @@ export const SystemHealthDashboard: React.FC = () => {
             </IconButton>
           }
         >
-          System health data could not be loaded: {error}
+          System health data could not be loaded: {error?.message || 'Unknown error'}
         </Alert>
       )}
 
@@ -255,7 +253,7 @@ export const SystemHealthDashboard: React.FC = () => {
           <ServiceHealthGrid
             services={systemHealth?.services || []}
             isLoading={isLoading}
-            error={error}
+            error={error?.message || null}
             onServiceClick={handleServiceClick}
             onRefresh={handleRefreshAll}
           />
@@ -264,7 +262,7 @@ export const SystemHealthDashboard: React.FC = () => {
         {/* Integration Tests */}
         <Grid item xs={12} lg={4}>
           <IntegrationTestRunner
-            testSuite={integrationTests}
+            testSuite={integrationTests || null}
             isRunning={isRunningTests}
             onRunTests={runIntegrationTests}
             disabled={isLoading}
@@ -276,9 +274,9 @@ export const SystemHealthDashboard: React.FC = () => {
           <Paper sx={{ position: 'relative' }}>
             <HealthMetricsChart
               healthHistory={healthHistory}
-              systemMetrics={systemMetrics}
+              systemMetrics={systemMetrics || null}
               isLoading={isLoading}
-              error={error}
+              error={error?.message || null}
               onTimeRangeChange={setTimeRange}
               currentTimeRange={timeRange}
             />
@@ -347,9 +345,9 @@ export const SystemHealthDashboard: React.FC = () => {
           <Box sx={{ height: 'calc(100vh - 120px)' }}>
             <HealthMetricsChart
               healthHistory={healthHistory}
-              systemMetrics={systemMetrics}
+              systemMetrics={systemMetrics || null}
               isLoading={isLoading}
-              error={error}
+              error={error?.message || null}
               onTimeRangeChange={setTimeRange}
               currentTimeRange={timeRange}
             />
