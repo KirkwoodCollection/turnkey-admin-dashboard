@@ -15,7 +15,7 @@ module.exports = {
       ],
       plugins: [
         '@babel/plugin-transform-modules-commonjs',
-        '@babel/plugin-proposal-class-properties',
+        '@babel/plugin-transform-class-properties',
         '@babel/plugin-transform-class-static-block'
       ]
     }
@@ -35,7 +35,7 @@ module.exports = {
     }],
   ],
   plugins: [
-    '@babel/plugin-proposal-class-properties',
+    '@babel/plugin-transform-class-properties',
     '@babel/plugin-transform-class-static-block',
   ],
 };
