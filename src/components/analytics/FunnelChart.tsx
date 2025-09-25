@@ -19,7 +19,7 @@ import {
   ArrowForward,
 } from '@mui/icons-material';
 import { useFunnelData } from '../../hooks/useAnalyticsData';
-import { TimeRange } from '../../services/analyticsApi';
+import { TimeRange, FunnelStage } from '../../services/analyticsApi';
 
 interface FunnelChartProps {
   timeRange: TimeRange;
@@ -178,10 +178,11 @@ export const FunnelChart: React.FC<FunnelChartProps> = ({
   propertyId,
   onStageClick,
 }) => {
-  const { data: funnelData, isLoading, error, refetch } = useFunnelData(timeRange, propertyId);
+  const { data: funnelResponse, isLoading, error, refetch } = useFunnelData(timeRange, propertyId);
 
-  const maxCount = funnelData?.[0]?.count ?? 0;
-  const totalConversions = funnelData?.[funnelData.length - 1]?.count ?? 0;
+  const funnelData = funnelResponse?.funnel ?? [];
+  const maxCount = funnelData[0]?.count ?? 0;
+  const totalConversions = funnelData[funnelData.length - 1]?.count ?? 0;
   const overallConversionRate = maxCount > 0 ? (totalConversions / maxCount) * 100 : 0;
 
   const handleRefresh = () => {
@@ -247,7 +248,7 @@ export const FunnelChart: React.FC<FunnelChartProps> = ({
             <FunnelSkeleton key={index} />
           ))
         ) : funnelData && funnelData.length > 0 ? (
-          funnelData.map((stage, index) => (
+          funnelData.map((stage: FunnelStage, index: number) => (
             <FunnelStage
               key={stage.stage}
               stage={stage.stage}

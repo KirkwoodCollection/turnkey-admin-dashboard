@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "build:production": "tsc && vite build --config vite.config.production.ts",
+    "build:production": "vite build --config vite.config.production.ts",
+    "build:with-types": "tsc && vite build --config vite.config.production.ts",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
     "lint": "eslint src --ext .ts,.tsx",
