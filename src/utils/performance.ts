@@ -3,7 +3,7 @@ import { getCLS, getFID, getFCP, getLCP, getTTFB } from 'web-vitals';
 // Performance monitoring initialization
 export const initializePerformanceMonitoring = () => {
   // Initialize Firebase Performance if available
-  if (import.meta.env?.VITE_FIREBASE_PROJECT_ID) {
+  if (import.meta.env.VITE_FIREBASE_PROJECT_ID) {
     initializeFirebasePerformance();
   }
 
@@ -22,10 +22,10 @@ const initializeFirebasePerformance = async () => {
     const { getAnalytics } = await import('firebase/analytics');
 
     const app = initializeApp({
-      projectId: import.meta.env?.VITE_FIREBASE_PROJECT_ID,
-      apiKey: import.meta.env?.VITE_FIREBASE_API_KEY,
-      authDomain: `${import.meta.env?.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`,
-      measurementId: import.meta.env?.VITE_GA_MEASUREMENT_ID,
+      projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+      apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+      authDomain: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`,
+      measurementId: import.meta.env.VITE_GA_MEASUREMENT_ID,
     });
 
     // Initialize Performance Monitoring
@@ -178,7 +178,7 @@ export const trackError = (error: Error, context?: string) => {
   sendToCloudMonitoring(errorMetric);
   
   // Also send to console in development
-  if (import.meta.env?.DEV) {
+  if (import.meta.env.DEV) {
     console.error('Tracked error:', error, context);
   }
 };

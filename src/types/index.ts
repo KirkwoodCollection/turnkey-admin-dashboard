@@ -113,6 +113,7 @@ export interface User {
   role: 'admin' | 'manager' | 'viewer';
   displayName?: string;
   photoURL?: string;
+  lastLogin?: Date;
 }
 
 export interface ApiResponse<T> {

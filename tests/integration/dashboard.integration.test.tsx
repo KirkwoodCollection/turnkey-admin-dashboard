@@ -117,7 +117,7 @@ describe('AnalyticsDashboard Integration Tests', () => {
     });
 
     // Verify main dashboard components are rendered
-    expect(screen.getByText('AnalyticsDashboard Overview')).toBeInTheDocument();
+    expect(screen.getByText('Real-Time Analytics Dashboard')).toBeInTheDocument();
     
     // Check TopStatsPanel
     expect(screen.getByText('Active Users')).toBeInTheDocument();
@@ -175,7 +175,7 @@ describe('AnalyticsDashboard Integration Tests', () => {
 
     // Simulate WebSocket message
     const liveUpdate = {
-      type: 'METRICS_UPDATE',
+      type: 'analytics.metrics.updated',
       payload: {
         ...mockAnalyticsDashboardMetrics,
         activeUsers: 55, // Updated value
@@ -190,8 +190,8 @@ describe('AnalyticsDashboard Integration Tests', () => {
       expect(screen.getByText('55')).toBeInTheDocument();
     });
 
-    // Verify connection indicator shows "LIVE"
-    expect(screen.getByText('LIVE')).toBeInTheDocument();
+    // Verify connection indicator shows "Live Connected"
+    expect(screen.getByText('Live Connected')).toBeInTheDocument();
   });
 
   it('handles session updates in real-time', async () => {
@@ -205,7 +205,7 @@ describe('AnalyticsDashboard Integration Tests', () => {
 
     // Simulate new session creation
     const newSession = {
-      type: 'SESSION_UPDATE',
+      type: 'session.updated',
       payload: {
         sessionId: 'sess_new_001',
         userId: 'user_new_001',

@@ -3,9 +3,6 @@ name: Deploy Admin Dashboard to Production
 on:
   push:
     branches: [main]
-    paths:
-      - 'TurnkeyHMS-workspace/turnkey-admin-dashboard/**'
-      - '.github/workflows/deploy-admin-dashboard-production.yml'
   workflow_dispatch:
     inputs:
       force_deploy:
@@ -37,18 +34,15 @@ jobs:
 
       - name: Run linting
         working-directory: .
-        run: npm run lint || echo "Linting issues detected, continuing deployment"
-        continue-on-error: true
+        run: npm run lint
 
       - name: Run type checking
         working-directory: .
-        run: npm run type-check || echo "Type errors detected, continuing deployment"
-        continue-on-error: true
+        run: npm run type-check
 
       - name: Run unit tests
         working-directory: .
-        run: npm run test:unit -- --coverage || echo "Unit tests failed, continuing deployment"
-        continue-on-error: true
+        run: npm run test:unit -- --coverage
 
       - name: Upload coverage
         uses: codecov/codecov-action@v3
@@ -128,13 +122,20 @@ jobs:
 
       - name: Build and push Docker image
         working-directory: .
+        env:
+          VITE_API_BASE_URL: https://api.turnkeyhms.com
+          VITE_WS_URL: wss://api.turnkeyhms.com
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          VITE_GA_MEASUREMENT_ID: ${{ secrets.GA_MEASUREMENT_ID }}
+          VITE_VERSION: ${{ needs.build.outputs.version }}
         run: |
           docker build \
-            --build-arg VITE_API_BASE_URL=https://api.turnkeyhms.com \
-            --build-arg VITE_WS_URL=wss://api.turnkeyhms.com \
-            --build-arg VITE_FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }} \
-            --build-arg VITE_GA_MEASUREMENT_ID=${{ secrets.GA_MEASUREMENT_ID }} \
-            -f Dockerfile.production \
+            --build-arg VITE_API_BASE_URL \
+            --build-arg VITE_WS_URL \
+            --build-arg VITE_FIREBASE_PROJECT_ID \
+            --build-arg VITE_GA_MEASUREMENT_ID \
+            --build-arg VITE_VERSION \
+            -f deployment/docker/Dockerfile.production \
             -t ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/turnkey-services/${{ env.SERVICE_NAME }}:${{ needs.build.outputs.version }} \
             -t ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/turnkey-services/${{ env.SERVICE_NAME }}:latest \
             .
@@ -158,7 +159,7 @@ jobs:
             --service-account turnkey-admin-api-prod@${{ secrets.GCP_PROJECT }}.iam.gserviceaccount.com \
             --labels version=${{ needs.build.outputs.version }},service=admin-dashboard,env=production \
             --update-env-vars NODE_ENV=production \
-            --no-allow-unauthenticated
+            --allow-unauthenticated
 
   integration-tests:
     needs: [deploy-cdn, deploy-cloud-run]

@@ -1,17 +1,16 @@
 // Environment utilities for handling Vite and test environments
 
-export const getEnvVar = (key: string, defaultValue: string = ''): string => {
+export const getEnvVar = (key: keyof ImportMetaEnv, defaultValue: string = ''): string => {
   // In test environment, use process.env
   if (process.env.NODE_ENV === 'test') {
     return process.env[key] || defaultValue;
   }
-  
+
   // In browser/Vite environment, use import.meta.env
-  if (typeof window !== 'undefined' && 'import' in window && 'meta' in (window as any).import) {
-    const meta = (window as any).import.meta;
-    return meta?.env?.[key] || defaultValue;
+  if (typeof import.meta !== 'undefined' && import.meta.env) {
+    return import.meta.env[key] || defaultValue;
   }
-  
+
   // Fallback for production builds
   return defaultValue;
 };
