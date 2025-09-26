@@ -76,6 +76,8 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
     onClose: handleClose,
     onError: handleError,
     onMessage: handleMessage,
+    reconnectDelay: 60000, // 60 seconds between attempts (much longer)
+    maxReconnectAttempts: 1, // Only try once, then give up
   });
 
   // Health check - mark as unhealthy if no heartbeat for 2 minutes

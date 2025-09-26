@@ -9,26 +9,28 @@ export default defineConfig({
     port: 3001,
     host: true,
     proxy: {
-      '/api/v1/analytics': {
-        target: process.env.REACT_APP_ANALYTICS_API_URL || 'http://localhost:8001',
+      // COMPONENT TESTING: Change target to 'http://localhost:8888' to test individual components
+      // Then run: node test-server.js in a separate terminal
+      '/api/v1': {
+        target: 'https://api.turnkeyhms.com', // Change to 'http://localhost:8888' for testing
         changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path.replace(/^\/api\/v1/, '/api/v1'),
+        secure: true,
       },
       '/api': {
-        target: process.env.VITE_API_BASE_URL || 'http://localhost:8080',
+        target: 'https://api.turnkeyhms.com',
         changeOrigin: true,
-        secure: false,
+        secure: true,
       },
-      '/ws/analytics': {
-        target: process.env.REACT_APP_ANALYTICS_WS_URL || 'ws://localhost:8001',
-        ws: true,
+      '/sessions': {
+        target: 'https://api.turnkeyhms.com',
         changeOrigin: true,
+        secure: true,
       },
       '/ws': {
-        target: process.env.VITE_WS_URL || 'ws://localhost:8080',
+        target: 'wss://api.turnkeyhms.com',
         ws: true,
         changeOrigin: true,
+        secure: true,
       },
     },
   },

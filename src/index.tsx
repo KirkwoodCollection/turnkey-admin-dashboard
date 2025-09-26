@@ -1,16 +1,14 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-// import { initializePerformanceMonitoring } from './utils/performance';
 
-// Initialize performance monitoring in production
-// if (process.env.NODE_ENV === 'production') {
-//   initializePerformanceMonitoring();
-// }
+const rootElement = document.getElementById('root');
 
-const root = ReactDOM.createRoot(
-  document.getElementById('root') as HTMLElement
-);
+if (!rootElement) {
+  throw new Error('Root element not found');
+}
+
+const root = ReactDOM.createRoot(rootElement as HTMLElement);
 
 root.render(
   <React.StrictMode>

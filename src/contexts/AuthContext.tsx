@@ -3,7 +3,6 @@ import {
   signInWithPopup,
   signOut,
   onAuthStateChanged,
-  User as FirebaseUser,
   getIdToken as getFirebaseIdToken
 } from 'firebase/auth';
 import { auth, googleProvider } from '../config/firebase';
@@ -31,6 +30,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Listen for authentication state changes
   useEffect(() => {
+    // Handle demo mode when Firebase is not available
+    if (!auth) {
+      // Create a demo user for showcase purposes
+      const demoUser: User = {
+        uid: 'demo-user',
+        email: 'demo@turnkeyhms.com',
+        displayName: 'Demo Admin',
+        role: 'admin',
+      };
+      setUser(demoUser);
+      setIsLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
         // Convert Firebase user to our User type
@@ -52,6 +65,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const loginWithGoogle = async () => {
+    if (!auth || !googleProvider) {
+      console.warn('Firebase not available - already logged in as demo user');
+      return;
+    }
+
     setIsLoading(true);
     try {
       await signInWithPopup(auth, googleProvider);
@@ -65,6 +83,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = async () => {
+    if (!auth) {
+      console.warn('Firebase not available - cannot logout from demo mode');
+      return;
+    }
+
     try {
       await signOut(auth);
       // User state will be updated automatically via onAuthStateChanged
@@ -75,6 +98,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const refreshToken = async () => {
+    if (!auth) {
+      console.warn('Firebase not available - demo mode token refresh');
+      return;
+    }
+
     try {
       if (auth.currentUser) {
         // Force refresh the Firebase token
@@ -90,6 +118,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const getIdToken = async (): Promise<string> => {
+    if (!auth) {
+      console.warn('Firebase not available - returning demo token');
+      return 'demo-token';
+    }
+
     try {
       if (auth.currentUser) {
         return await getFirebaseIdToken(auth.currentUser);

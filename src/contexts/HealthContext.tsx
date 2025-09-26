@@ -179,8 +179,8 @@ export const HealthProvider: React.FC<HealthProviderProps> = ({
     overallStatus: overallHealthStatus,
     
     // Quick access metrics
-    totalServices: systemHealth?.summary.total_services || 0,
-    healthyServices: systemHealth?.summary.healthy_services || 0,
+    totalServices: systemHealth?.summary.total_services,
+    healthyServices: systemHealth?.summary.healthy_services,
     criticalServices,
     degradedServices,
     

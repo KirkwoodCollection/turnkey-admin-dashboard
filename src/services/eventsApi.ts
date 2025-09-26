@@ -1,6 +1,6 @@
 import { Session, Event, EventType } from '../types';
 
-const EVENTS_API_BASE = process.env.REACT_APP_EVENTS_API_URL || 'http://localhost:8002/api/v1';
+const EVENTS_API_BASE = (import.meta as any).env.VITE_EVENTS_API_URL || 'https://api.turnkeyhms.com';
 
 interface SessionsResponse {
   sessions: Session[];
@@ -80,11 +80,11 @@ class EventsAPIClient {
       params.append('page_size', filters.pageSize.toString());
     }
 
-    return this.fetch<SessionsResponse>(`/sessions?${params}`);
+    return this.fetch<SessionsResponse>(`/api/v1/admin/sessions?${params}`);
   }
 
   async getSession(sessionId: string): Promise<Session> {
-    return this.fetch<Session>(`/sessions/${sessionId}`);
+    return this.fetch<Session>(`/api/v1/admin/sessions/${sessionId}`);
   }
 
   async getActiveSessions(propertyId?: string): Promise<Session[]> {
@@ -119,7 +119,7 @@ class EventsAPIClient {
       params.append('page_size', filters.pageSize.toString());
     }
 
-    return this.fetch<EventsResponse>(`/events?${params}`);
+    return this.fetch<EventsResponse>(`/api/v1/admin/events?${params}`);
   }
 
   async getSessionEvents(sessionId: string): Promise<Event[]> {
@@ -127,7 +127,7 @@ class EventsAPIClient {
     return response.events;
   }
 
-  // Real-time metrics
+  // Real-time metrics - Updated to use actual available endpoint
   async getRealtimeMetrics(propertyId?: string): Promise<{
     activeSessions: number;
     sessionsLastHour: number;
@@ -135,8 +135,23 @@ class EventsAPIClient {
     topDestinations: Array<{ destination: string; count: number }>;
     topHotels: Array<{ hotel: string; count: number }>;
   }> {
-    const params = propertyId ? `?property_id=${propertyId}` : '';
-    return this.fetch(`/metrics/realtime${params}`);
+    // Use the admin realtime metrics endpoint
+    const response = await this.fetch<{
+      timestamp: string;
+      active_sessions: number;
+      properties: Record<string, { active_sessions: number; events_count: number }>;
+      total_events_today: number;
+      status: string;
+    }>('/api/v1/admin/sessions/realtime');
+
+    // Map the real response to expected format
+    return {
+      activeSessions: response.active_sessions,
+      sessionsLastHour: response.total_events_today, // Approximate
+      eventsLastMinute: Math.round(response.total_events_today / (24 * 60)), // Estimate
+      topDestinations: [],
+      topHotels: []
+    };
   }
 
   // Session replay
@@ -149,7 +164,7 @@ class EventsAPIClient {
       description: string;
     }>;
   }> {
-    return this.fetch(`/sessions/${sessionId}/replay`);
+    return this.fetch(`/api/v1/admin/sessions/${sessionId}/replay`);
   }
 }
 

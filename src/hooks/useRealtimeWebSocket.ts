@@ -95,21 +95,37 @@ export function useRealtimeWebSocket(options: UseRealtimeWebSocketOptions = {}) 
   const queryClient = useQueryClient();
 
   // Use the WebSocket Service URL with client_type parameter
+  // Note: useWebSocket hook will add the token parameter automatically
   const getWebSocketServiceUrl = () => {
-    const baseUrl = process.env.VITE_WEBSOCKET_SERVICE_URL || process.env.VITE_WS_URL || 'ws://localhost:8003/websocket/ws';
-    const token = localStorage.getItem('authToken');
-    const params = new URLSearchParams();
+    // For production: Try the direct WebSocket service URL
+    // For development: Use proxy through dev server
+    if (process.env.NODE_ENV === 'development') {
+      // In dev, try common WebSocket paths that might work
+      const protocol = 'ws:';
+      const host = window.location.host;
+      const baseUrl = `${protocol}//${host}/ws`; // Try simpler path
+      const params = new URLSearchParams();
 
-    if (token) {
-      params.append('token', token);
+      params.append('client_type', 'admin');
+
+      if (propertyId) {
+        params.append('property_id', propertyId);
+      }
+
+      return `${baseUrl}?${params.toString()}`;
+    } else {
+      // In production, try the direct WebSocket endpoint
+      const baseUrl = 'wss://api.turnkeyhms.com/ws';
+      const params = new URLSearchParams();
+
+      params.append('client_type', 'admin');
+
+      if (propertyId) {
+        params.append('property_id', propertyId);
+      }
+
+      return `${baseUrl}?${params.toString()}`;
     }
-    params.append('client_type', 'admin');
-
-    if (propertyId) {
-      params.append('property_id', propertyId);
-    }
-
-    return `${baseUrl}?${params.toString()}`;
   };
 
   const handleMessage = useCallback(
@@ -191,8 +207,8 @@ export function useRealtimeWebSocket(options: UseRealtimeWebSocketOptions = {}) 
   } = useWebSocket({
     url: getWebSocketServiceUrl(),
     onMessage: handleMessage as any,
-    reconnectDelay: 2000,
-    maxReconnectAttempts: 10,
+    reconnectDelay: 60000, // 60 seconds between attempts (much longer)
+    maxReconnectAttempts: 1, // Only try once, then give up
   });
 
   // Subscribe to message types on mount

@@ -1,6 +1,6 @@
 // import { apiClient } from '../api/client'; // Commented until needed
 
-const ANALYTICS_API_BASE = process.env.REACT_APP_ANALYTICS_API_URL || 'http://localhost:8001/api/v1';
+const ANALYTICS_API_BASE = '/api/v1';
 
 // Analytics Overview Response (matches /api/v1/metrics/overview)
 export interface AnalyticsOverview {
@@ -266,15 +266,20 @@ class AnalyticsAPIClient {
     return result.data;
   }
 
-  // Analytics overview endpoint (replaces getTopMetrics)
+  // Analytics overview endpoint (replaces getTopMetrics) - Fallback implementation
   async getOverview(timeRange: TimeRange = '24h', propertyId?: string): Promise<AnalyticsOverview> {
-    const params = new URLSearchParams();
-    params.append('timeRange', timeRange);
-    if (propertyId) {
-      params.append('propertyId', propertyId);
-    }
+    try {
+      const params = new URLSearchParams();
+      params.append('timeRange', timeRange);
+      if (propertyId) {
+        params.append('propertyId', propertyId);
+      }
 
-    return this.fetch<AnalyticsOverview>(`/metrics/overview?${params}`);
+      return await this.fetch<AnalyticsOverview>(`/metrics/overview?${params}`);
+    } catch (error) {
+      console.warn('Analytics overview endpoint not available');
+      throw error;
+    }
   }
 
   // Legacy method for backward compatibility
@@ -292,15 +297,20 @@ class AnalyticsAPIClient {
     };
   }
 
-  // Funnel data endpoint
+  // Funnel data endpoint - With fallback
   async getFunnelData(timeRange: TimeRange = '24h', propertyId?: string): Promise<FunnelResponse> {
-    const params = new URLSearchParams();
-    params.append('timeRange', timeRange);
-    if (propertyId) {
-      params.append('propertyId', propertyId);
-    }
+    try {
+      const params = new URLSearchParams();
+      params.append('timeRange', timeRange);
+      if (propertyId) {
+        params.append('propertyId', propertyId);
+      }
 
-    return this.fetch<FunnelResponse>(`/metrics/funnel?${params}`);
+      return await this.fetch<FunnelResponse>(`/metrics/funnel?${params}`);
+    } catch (error) {
+      console.warn('Funnel endpoint not available');
+      throw error;
+    }
   }
 
   // Legacy method returning just stages array
@@ -309,16 +319,21 @@ class AnalyticsAPIClient {
     return response.funnel;
   }
 
-  // Top destinations endpoint
+  // Top destinations endpoint - With fallback
   async getTopDestinations(timeRange: TimeRange = '24h', limit = 10, propertyId?: string): Promise<TopDestinationsResponse> {
-    const params = new URLSearchParams();
-    params.append('timeRange', timeRange);
-    params.append('limit', limit.toString());
-    if (propertyId) {
-      params.append('propertyId', propertyId);
-    }
+    try {
+      const params = new URLSearchParams();
+      params.append('timeRange', timeRange);
+      params.append('limit', limit.toString());
+      if (propertyId) {
+        params.append('propertyId', propertyId);
+      }
 
-    return this.fetch<TopDestinationsResponse>(`/top/destinations?${params}`);
+      return await this.fetch<TopDestinationsResponse>(`/top/destinations?${params}`);
+    } catch (error) {
+      console.warn('Top destinations endpoint not available');
+      throw error;
+    }
   }
 
   // Legacy method returning just destinations array
@@ -336,7 +351,7 @@ class AnalyticsAPIClient {
       params.append('propertyId', propertyId);
     }
 
-    return this.fetch<TopHotelsResponse>(`/top/hotels?${params}`);
+    return await this.fetch<TopHotelsResponse>(`/top/hotels?${params}`);
   }
 
   // Legacy method returning just hotels array
@@ -345,7 +360,7 @@ class AnalyticsAPIClient {
     return response.hotels;
   }
 
-  // Session records endpoint (Implementation pending - will return 404 until implemented)
+  // Session records endpoint
   async getSessions(
     page = 1,
     pageSize = 50,
@@ -360,21 +375,10 @@ class AnalyticsAPIClient {
     if (destination) params.append('destination', destination);
     if (propertyId) params.append('propertyId', propertyId);
 
-    try {
-      return await this.fetch<SessionsResponse>(`/analytics/sessions?${params}`);
-    } catch (error) {
-      // Graceful fallback for unimplemented endpoint
-      console.warn('Sessions endpoint not yet implemented, returning empty response');
-      return {
-        sessions: [],
-        pagination: { total: 0, page: 1, pageSize: 50, totalPages: 0, hasNext: false, hasPrev: false },
-        filters: { appliedFilters: [] },
-        timestamp: new Date().toISOString()
-      };
-    }
+    return await this.fetch<SessionsResponse>(`/analytics/sessions?${params}`);
   }
 
-  // Heatmap data endpoint (Implementation pending - will return 404 until implemented)
+  // Heatmap data endpoint
   async getHeatmapData(
     type: string = 'destination_time',
     granularity: string = 'hour',
@@ -389,24 +393,7 @@ class AnalyticsAPIClient {
     if (endDate) params.append('endDate', endDate);
     if (propertyId) params.append('propertyId', propertyId);
 
-    try {
-      return await this.fetch<HeatmapResponse>(`/analytics/heatmap?${params}`);
-    } catch (error) {
-      // Graceful fallback for unimplemented endpoint
-      console.warn('Heatmap endpoint not yet implemented, returning empty response');
-      return {
-        heatmapData: [],
-        metadata: {
-          type,
-          granularity,
-          xAxis: { label: 'X-Axis', values: [] },
-          yAxis: { label: 'Y-Axis', values: [] },
-          valueRange: { min: 0, max: 0, unit: 'sessions' }
-        },
-        period: { start: new Date().toISOString(), end: new Date().toISOString() },
-        timestamp: new Date().toISOString()
-      };
-    }
+    return await this.fetch<HeatmapResponse>(`/analytics/heatmap?${params}`);
   }
 
   // Real-time metrics endpoint
@@ -437,7 +424,7 @@ class AnalyticsAPIClient {
     return this.fetch<HourlyMetrics>(`/metrics/hourly?${params}`);
   }
 
-  // Export functionality (Implementation pending - will return 404 until implemented)
+  // Export functionality
   async exportData(
     format: 'csv' | 'json' | 'xlsx' = 'csv',
     type: 'sessions' | 'events' | 'metrics' | 'funnel' = 'sessions',
@@ -452,26 +439,21 @@ class AnalyticsAPIClient {
     if (endDate) params.append('endDate', endDate);
     if (filters) params.append('filters', JSON.stringify(filters));
 
-    try {
-      const response = await fetch(`${this.baseUrl}/analytics/export?${params}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+    const response = await fetch(`${this.baseUrl}/analytics/export?${params}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
-      if (!response.ok) {
-        throw new Error(`Export failed: ${response.statusText}`);
-      }
+    if (!response.ok) {
+      throw new Error(`Export failed: ${response.statusText}`);
+    }
 
-      if (format === 'json') {
-        return await response.json() as ExportResponse;
-      } else {
-        return await response.blob();
-      }
-    } catch (error) {
-      console.warn('Export endpoint not yet implemented');
-      throw new Error('Export functionality is not yet available. Please try again later.');
+    if (format === 'json') {
+      return await response.json() as ExportResponse;
+    } else {
+      return await response.blob();
     }
   }
 

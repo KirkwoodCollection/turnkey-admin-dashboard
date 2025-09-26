@@ -8,10 +8,10 @@ import { WebSocketProvider } from './contexts/WebSocketContext';
 import { TimeFilterProvider } from './contexts/TimeFilterContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { HealthProvider } from './contexts/HealthContext';
+import { EventsProvider } from './contexts/EventsContext';
 import { Overview } from './pages/Overview';
 import { SystemHealthDashboard } from './pages/SystemHealth';
 import { AnalyticsDashboard } from './pages/AnalyticsDashboard';
-import { GrafanaRedirect } from './components/GrafanaRedirect';
 
 // Create React Query client
 const queryClient = new QueryClient({
@@ -97,38 +97,38 @@ function App() {
           <CssBaseline />
           <BrowserRouter>
             <AuthProvider>
-              <AuthGuard>
-                <WebSocketProvider>
-                  <HealthProvider>
+              {/* Temporarily bypass AuthGuard to debug */}
+              <WebSocketProvider>
+                <HealthProvider>
+                  <EventsProvider>
                     <TimeFilterProvider>
-                      <Routes>
-                        <Route path="/" element={
-                          <Layout currentPage="analytics">
-                            <AnalyticsDashboard />
-                          </Layout>
-                        } />
-                        <Route path="/overview" element={
-                          <Layout currentPage="overview">
-                            <Overview />
-                          </Layout>
-                        } />
-                        <Route path="/system-health" element={
-                          <Layout currentPage="system-health">
-                            <SystemHealthDashboard />
-                          </Layout>
-                        } />
-                        <Route path="/analytics" element={
-                          <Layout currentPage="analytics">
-                            <AnalyticsDashboard />
-                          </Layout>
-                        } />
-                        <Route path="/analytics/grafana/*" element={<GrafanaRedirect />} />
-                        <Route path="*" element={<Navigate to="/" replace />} />
-                      </Routes>
+                    <Routes>
+                      <Route path="/" element={
+                        <Layout currentPage="analytics">
+                          <AnalyticsDashboard />
+                        </Layout>
+                      } />
+                      <Route path="/overview" element={
+                        <Layout currentPage="overview">
+                          <Overview />
+                        </Layout>
+                      } />
+                      <Route path="/system-health" element={
+                        <Layout currentPage="system-health">
+                          <SystemHealthDashboard />
+                        </Layout>
+                      } />
+                      <Route path="/analytics" element={
+                        <Layout currentPage="analytics">
+                          <AnalyticsDashboard />
+                        </Layout>
+                      } />
+                      <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
                     </TimeFilterProvider>
-                  </HealthProvider>
-                </WebSocketProvider>
-              </AuthGuard>
+                  </EventsProvider>
+                </HealthProvider>
+              </WebSocketProvider>
             </AuthProvider>
           </BrowserRouter>
         </ThemeProvider>

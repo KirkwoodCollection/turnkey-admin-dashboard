@@ -1,10 +1,11 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { ApiError } from '../types';
 
-// Service URLs from environment
-const ANALYTICS_SERVICE_URL = (import.meta as any).env.VITE_ANALYTICS_SERVICE_URL || 'http://localhost:8001/api/v1';
-const EVENTS_SERVICE_URL = (import.meta as any).env.VITE_EVENTS_SERVICE_URL || 'http://localhost:8000/api/v1';
-const API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || 'https://api.turnkeyhms.com';
+// Service URLs from environment - Use relative URLs in development to go through Vite proxy
+const isDevelopment = (import.meta as any).env.DEV;
+const ANALYTICS_SERVICE_URL = isDevelopment ? '/api/v1' : ((import.meta as any).env.VITE_ANALYTICS_SERVICE_URL || 'https://api.turnkeyhms.com/api/v1');
+const EVENTS_SERVICE_URL = isDevelopment ? '/api/v1' : ((import.meta as any).env.VITE_EVENTS_SERVICE_URL || 'https://api.turnkeyhms.com/api/v1');
+const API_BASE_URL = isDevelopment ? '' : ((import.meta as any).env.VITE_API_BASE_URL || 'https://api.turnkeyhms.com');
 
 class ApiClient {
   private analyticsInstance: AxiosInstance;

@@ -204,7 +204,8 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
   };
 
   useEffect(() => {
-    connect();
+    // Temporarily disabled WebSocket to stop console flooding
+    // connect();
     return () => {
       disconnect();
     };

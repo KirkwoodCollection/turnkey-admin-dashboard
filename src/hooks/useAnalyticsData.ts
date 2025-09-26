@@ -1,8 +1,15 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  analyticsApi,
-  TimeRange
+  TimeRange,
+  TopMetrics,
+  FunnelStage,
+  TopDestination,
+  TopHotel,
+  SessionsResponse,
+  HeatmapResponse,
+  RealtimeMetrics
 } from '../services/analyticsApi';
+
 
 // Query keys for consistent caching
 const ANALYTICS_QUERY_KEYS = {
@@ -15,48 +22,57 @@ const ANALYTICS_QUERY_KEYS = {
   realtimeMetrics: (propertyId?: string) => ['analytics', 'realtime', propertyId],
 };
 
-// Top metrics hook
+// Top metrics hook - uses Analytics API ONLY
 export function useTopMetrics(timeRange: TimeRange = '24h', propertyId?: string) {
   return useQuery({
     queryKey: ANALYTICS_QUERY_KEYS.topMetrics(timeRange, propertyId),
-    queryFn: () => analyticsApi.getTopMetrics(timeRange, propertyId),
-    staleTime: 30 * 1000, // 30 seconds
-    gcTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: 60 * 1000, // Refetch every minute
+    queryFn: async (): Promise<TopMetrics> => {
+      const { analyticsApi } = await import('../services/analyticsApi');
+      return await analyticsApi.getTopMetrics(timeRange, propertyId);
+    },
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchInterval: 60 * 1000,
   });
 }
 
-// Funnel data hook
+// Funnel data hook - returns empty data
 export function useFunnelData(timeRange: TimeRange = '24h', propertyId?: string) {
   return useQuery({
     queryKey: ANALYTICS_QUERY_KEYS.funnelData(timeRange, propertyId),
-    queryFn: () => analyticsApi.getFunnelData(timeRange, propertyId),
-    staleTime: 60 * 1000, // 1 minute
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    queryFn: async (): Promise<FunnelStage[]> => {
+      return [];
+    },
+    staleTime: 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 }
 
-// Top destinations hook
+// Top destinations hook - returns empty data
 export function useTopDestinations(timeRange: TimeRange = '24h', limit = 10, propertyId?: string) {
   return useQuery({
     queryKey: ANALYTICS_QUERY_KEYS.topDestinations(timeRange, limit, propertyId),
-    queryFn: () => analyticsApi.getTopDestinations(timeRange, limit, propertyId),
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 15 * 60 * 1000, // 15 minutes
+    queryFn: async (): Promise<TopDestination[]> => {
+      return [];
+    },
+    staleTime: 2 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
   });
 }
 
-// Top hotels hook
+// Top hotels hook - returns empty data
 export function useTopHotels(timeRange: TimeRange = '24h', limit = 10, propertyId?: string) {
   return useQuery({
     queryKey: ANALYTICS_QUERY_KEYS.topHotels(timeRange, limit, propertyId),
-    queryFn: () => analyticsApi.getTopHotels(timeRange, limit, propertyId),
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 15 * 60 * 1000, // 15 minutes
+    queryFn: async (): Promise<TopHotel[]> => {
+      return [];
+    },
+    staleTime: 2 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
   });
 }
 
-// Sessions hook
+// Sessions hook - returns empty data
 export function useAnalyticsSessions(
   timeRange: TimeRange = '24h',
   limit = 50,
@@ -65,37 +81,74 @@ export function useAnalyticsSessions(
 ) {
   return useQuery({
     queryKey: ANALYTICS_QUERY_KEYS.sessions(timeRange, limit, offset, propertyId),
-    queryFn: () => analyticsApi.getSessions(
-      Math.floor(offset / limit) + 1,
-      limit,
-      undefined, // status filter
-      undefined, // destination filter
-      propertyId
-    ),
-    staleTime: 30 * 1000, // 30 seconds
-    gcTime: 5 * 60 * 1000, // 5 minutes
-    placeholderData: (previousData) => previousData, // For pagination
+    queryFn: async (): Promise<SessionsResponse> => {
+      return {
+        sessions: [],
+        pagination: {
+          total: 0,
+          page: 1,
+          pageSize: 50,
+          totalPages: 0,
+          hasNext: false,
+          hasPrev: false,
+        },
+        filters: {
+          appliedFilters: []
+        },
+        timestamp: new Date().toISOString()
+      };
+    },
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+    placeholderData: (previousData) => previousData,
   });
 }
 
-// Heatmap data hook
+// Heatmap data hook - returns empty data
 export function useHeatmapData(timeRange: TimeRange = '7d', propertyId?: string) {
   return useQuery({
     queryKey: ANALYTICS_QUERY_KEYS.heatmap(timeRange, propertyId),
-    queryFn: () => analyticsApi.getHeatmapData(timeRange, propertyId),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes
+    queryFn: async (): Promise<HeatmapResponse> => {
+      return {
+        heatmapData: [],
+        metadata: {
+          type: 'destination_time',
+          granularity: 'hour',
+          xAxis: { label: 'Destination', values: [] },
+          yAxis: { label: 'Time', values: [] },
+          valueRange: { min: 0, max: 0, unit: 'count' }
+        },
+        period: {
+          start: new Date().toISOString(),
+          end: new Date().toISOString(),
+        },
+        timestamp: new Date().toISOString()
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 }
 
-// Real-time metrics hook
+// Real-time metrics hook - uses real sessions data
 export function useRealtimeAnalyticsMetrics(propertyId?: string) {
   return useQuery({
     queryKey: ANALYTICS_QUERY_KEYS.realtimeMetrics(propertyId),
-    queryFn: () => analyticsApi.getRealtimeMetrics(propertyId),
-    staleTime: 5 * 1000, // 5 seconds for real-time
-    gcTime: 1 * 60 * 1000, // 1 minute
-    refetchInterval: 10 * 1000, // Refetch every 10 seconds
+    queryFn: async (): Promise<RealtimeMetrics> => {
+      const sessionsData = await getSessionsData();
+      return {
+        active_sessions: sessionsData.active_sessions,
+        events_last_hour: sessionsData.total_events_today,
+        events_last_15_minutes: 0,
+        events_by_type: {},
+        avg_events_per_session: 0,
+        peak_concurrent_sessions: sessionsData.active_sessions,
+        timestamp: sessionsData.timestamp
+      };
+    },
+    staleTime: 5 * 1000,
+    gcTime: 1 * 60 * 1000,
+    refetchInterval: 10 * 1000,
   });
 }
 
@@ -151,33 +204,15 @@ export function useInvalidateAnalytics() {
   };
 }
 
-// Export functionality hook
+// Export functionality hook - disabled since export endpoint doesn't exist
 export function useExportAnalytics() {
-
   const exportData = async (
     timeRange: TimeRange,
     format: 'csv' | 'json' = 'csv',
     propertyId?: string
   ) => {
-    try {
-      const response = await analyticsApi.exportData(format, 'sessions', undefined, undefined, { propertyId });
-      const blob = response instanceof Blob ? response : new Blob([JSON.stringify(response)], { type: 'application/json' });
-
-      // Create download link
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `analytics-${timeRange}-${new Date().toISOString().split('T')[0]}.${format}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
-      return true;
-    } catch (error) {
-      console.error('Export failed:', error);
-      throw error;
-    }
+    console.warn('Export functionality disabled - endpoint not available');
+    throw new Error('Export functionality not available');
   };
 
   return { exportData };

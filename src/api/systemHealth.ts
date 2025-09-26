@@ -82,7 +82,7 @@ export const systemHealthApi = {
    * Get current system health status for all services
    */
   async getSystemHealth(): Promise<SystemHealthResponse> {
-    const response = await apiClient.get<ApiResponse<SystemHealthResponse>>('/api/v1/system/health');
+    const response = await apiClient.analytics.get<ApiResponse<SystemHealthResponse>>('/system/health');
     return response.data;
   },
 
@@ -90,7 +90,7 @@ export const systemHealthApi = {
    * Get health status for a specific service
    */
   async getServiceHealth(serviceId: string): Promise<ServiceHealthStatus> {
-    const response = await apiClient.get<ApiResponse<ServiceHealthStatus>>(`/api/v1/system/health/services/${serviceId}`);
+    const response = await apiClient.analytics.get<ApiResponse<ServiceHealthStatus>>(`/system/health/services/${serviceId}`);
     return response.data;
   },
 
@@ -107,8 +107,8 @@ export const systemHealthApi = {
     if (params.service) searchParams.set('service', params.service);
     if (params.limit) searchParams.set('limit', params.limit.toString());
 
-    const response = await apiClient.get<ApiResponse<HealthHistoryPoint[]>>(
-      `/api/v1/system/health/history?${searchParams.toString()}`
+    const response = await apiClient.analytics.get<ApiResponse<HealthHistoryPoint[]>>(
+      `/system/health/history?${searchParams.toString()}`
     );
     return response.data;
   },
@@ -117,7 +117,7 @@ export const systemHealthApi = {
    * Get service dependency information
    */
   async getDependencies(): Promise<ServiceDependency[]> {
-    const response = await apiClient.get<ApiResponse<ServiceDependency[]>>('/api/v1/system/health/dependencies');
+    const response = await apiClient.analytics.get<ApiResponse<ServiceDependency[]>>('/system/health/dependencies');
     return response.data;
   },
 
@@ -125,7 +125,7 @@ export const systemHealthApi = {
    * Run integration tests
    */
   async runIntegrationTests(): Promise<IntegrationTestSuite> {
-    const response = await apiClient.post<ApiResponse<IntegrationTestSuite>>('/api/v1/system/health/integration-test');
+    const response = await apiClient.analytics.post<ApiResponse<IntegrationTestSuite>>('/system/health/integration-test');
     return response.data;
   },
 
@@ -133,7 +133,7 @@ export const systemHealthApi = {
    * Get latest integration test results
    */
   async getIntegrationTestResults(): Promise<IntegrationTestSuite> {
-    const response = await apiClient.get<ApiResponse<IntegrationTestSuite>>('/api/v1/system/health/integration-test');
+    const response = await apiClient.analytics.get<ApiResponse<IntegrationTestSuite>>('/system/health/integration-test');
     return response.data;
   },
 
@@ -171,7 +171,7 @@ export const systemHealthApi = {
         uptime_percentage: number;
         request_count: number;
       }>;
-    }>>(`/api/v1/system/health/metrics?range=${timeRange}`);
+    }>>(`/system/health/metrics?range=${timeRange}`);
     return response.data;
   }
 };

@@ -126,7 +126,7 @@ export const Layout: React.FC<LayoutProps> = ({
               <Button
                 variant={actualCurrentPage === 'analytics' ? 'contained' : 'text'}
                 startIcon={<AnalyticsRounded />}
-                onClick={() => navigate('/analytics/grafana/')}
+                onClick={() => navigate('/analytics')}
                 size="small"
               >
                 Analytics
@@ -152,21 +152,6 @@ export const Layout: React.FC<LayoutProps> = ({
           </Box>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            {/* Time Filter Controls - Show only on analytics page */}
-            {actualCurrentPage === 'overview' && (
-              <ButtonGroup variant="outlined" size="small">
-                {availableFilters.map((filter) => (
-                  <Button
-                    key={filter.value}
-                    variant={selectedFilter.value === filter.value ? 'contained' : 'outlined'}
-                    onClick={() => setSelectedFilter(filter)}
-                    sx={{ minWidth: 50 }}
-                  >
-                    {filter.label}
-                  </Button>
-                ))}
-              </ButtonGroup>
-            )}
 
             {/* System Health Status */}
             <Tooltip 

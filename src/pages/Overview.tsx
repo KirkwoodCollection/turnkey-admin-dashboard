@@ -101,7 +101,7 @@ export const Overview: React.FC = () => {
       stage: stage.name,
       count: stage.count,
       percentage: stage.percentage,
-      dropOffRate: stage.dropOff || 0
+      dropOffRate: stage.dropOff
     }));
   }, [funnelData]);
 
