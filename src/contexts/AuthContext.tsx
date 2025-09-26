@@ -30,16 +30,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Listen for authentication state changes
   useEffect(() => {
-    // Handle demo mode when Firebase is not available
     if (!auth) {
-      // Create a demo user for showcase purposes
-      const demoUser: User = {
-        uid: 'demo-user',
-        email: 'demo@turnkeyhms.com',
-        displayName: 'Demo Admin',
-        role: 'admin',
-      };
-      setUser(demoUser);
+      console.error('Firebase auth not initialized. Check Firebase configuration.');
       setIsLoading(false);
       return;
     }
@@ -66,8 +58,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const loginWithGoogle = async () => {
     if (!auth || !googleProvider) {
-      console.warn('Firebase not available - already logged in as demo user');
-      return;
+      throw new Error('Firebase auth not initialized. Cannot login.');
     }
 
     setIsLoading(true);
@@ -84,8 +75,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     if (!auth) {
-      console.warn('Firebase not available - cannot logout from demo mode');
-      return;
+      throw new Error('Firebase auth not initialized. Cannot logout.');
     }
 
     try {
@@ -99,8 +89,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const refreshToken = async () => {
     if (!auth) {
-      console.warn('Firebase not available - demo mode token refresh');
-      return;
+      throw new Error('Firebase auth not initialized. Cannot refresh token.');
     }
 
     try {
@@ -119,8 +108,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const getIdToken = async (): Promise<string> => {
     if (!auth) {
-      console.warn('Firebase not available - returning demo token');
-      return 'demo-token';
+      throw new Error('Firebase auth not initialized. Cannot get token.');
     }
 
     try {

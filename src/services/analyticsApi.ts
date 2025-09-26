@@ -1,4 +1,6 @@
 // import { apiClient } from '../api/client'; // Commented until needed
+import { auth } from '../config/firebase';
+import { getIdToken } from 'firebase/auth';
 
 const ANALYTICS_API_BASE = '/api/v1';
 
@@ -249,11 +251,28 @@ class AnalyticsAPIClient {
     this.baseUrl = baseUrl;
   }
 
+  private async getAuthHeaders(): Promise<Record<string, string>> {
+    try {
+      if (auth?.currentUser) {
+        const token = await getIdToken(auth.currentUser);
+        return {
+          'Authorization': `Bearer ${token}`,
+        };
+      }
+    } catch (error) {
+      console.warn('Failed to get Firebase auth token:', error);
+    }
+    return {};
+  }
+
   private async fetch<T>(path: string, options?: RequestInit): Promise<T> {
+    const authHeaders = await this.getAuthHeaders();
+
     const response = await fetch(`${this.baseUrl}${path}`, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
+        ...authHeaders,
         ...options?.headers,
       },
     });
@@ -439,10 +458,13 @@ class AnalyticsAPIClient {
     if (endDate) params.append('endDate', endDate);
     if (filters) params.append('filters', JSON.stringify(filters));
 
+    const authHeaders = await this.getAuthHeaders();
+
     const response = await fetch(`${this.baseUrl}/analytics/export?${params}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        ...authHeaders,
       },
     });
 

@@ -1,6 +1,9 @@
 import { Session, Event, EventType } from '../types';
+import { auth } from '../config/firebase';
+import { getIdToken } from 'firebase/auth';
 
-const EVENTS_API_BASE = (import.meta as any).env.VITE_EVENTS_API_URL || 'https://api.turnkeyhms.com';
+const EVENTS_API_BASE = (import.meta as any).env.VITE_EVENTS_API_URL || '';
+const EVENTS_API_KEY = (import.meta as any).env.VITE_EVENTS_API_KEY || '';
 
 interface SessionsResponse {
   sessions: Session[];
@@ -41,11 +44,41 @@ class EventsAPIClient {
     this.baseUrl = baseUrl;
   }
 
+  private async getAuthHeaders(path: string): Promise<Record<string, string>> {
+    // Admin endpoints use X-Internal-API-Key authentication
+    if (path.includes('/admin/')) {
+      if (EVENTS_API_KEY) {
+        return {
+          'X-Internal-API-Key': EVENTS_API_KEY,
+        };
+      } else {
+        console.warn('EVENTS_API_KEY not configured for admin endpoint');
+        return {};
+      }
+    }
+
+    // Other endpoints use Firebase JWT authentication
+    try {
+      if (auth?.currentUser) {
+        const token = await getIdToken(auth.currentUser);
+        return {
+          'Authorization': `Bearer ${token}`,
+        };
+      }
+    } catch (error) {
+      console.warn('Failed to get Firebase auth token:', error);
+    }
+    return {};
+  }
+
   private async fetch<T>(path: string, options?: RequestInit): Promise<T> {
+    const authHeaders = await this.getAuthHeaders(path);
+
     const response = await fetch(`${this.baseUrl}${path}`, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
+        ...authHeaders,
         ...options?.headers,
       },
     });
