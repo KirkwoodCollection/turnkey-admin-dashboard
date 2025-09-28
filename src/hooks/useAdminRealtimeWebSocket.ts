@@ -163,21 +163,20 @@ export function useAdminRealtimeWebSocket(options: UseAdminRealtimeWebSocketOpti
   });
 
   useEffect(() => {
-    const activeWS = useAdminWS && adminWS.isConnected ? adminWS : eventsWS;
-
-    if (activeWS.isConnected) {
+    if (useAdminWS && adminWS.isConnected) {
+      // Use Admin WebSocket with subscribe functionality
       const unsubscribers: (() => void)[] = [];
 
-      unsubscribers.push(activeWS.subscribe('session.updated', handleMessage as any));
-      unsubscribers.push(activeWS.subscribe('session.created', handleMessage as any));
-      unsubscribers.push(activeWS.subscribe('session.completed', handleMessage as any));
-      unsubscribers.push(activeWS.subscribe('event.received', handleMessage as any));
-      unsubscribers.push(activeWS.subscribe('analytics.metrics.updated', handleMessage as any));
-      unsubscribers.push(activeWS.subscribe('analytics.funnel.updated', handleMessage as any));
-      unsubscribers.push(activeWS.subscribe('analytics.toplists.updated', handleMessage as any));
+      unsubscribers.push(adminWS.subscribe('session.updated', handleMessage as any));
+      unsubscribers.push(adminWS.subscribe('session.created', handleMessage as any));
+      unsubscribers.push(adminWS.subscribe('session.completed', handleMessage as any));
+      unsubscribers.push(adminWS.subscribe('event.received', handleMessage as any));
+      unsubscribers.push(adminWS.subscribe('analytics.metrics.updated', handleMessage as any));
+      unsubscribers.push(adminWS.subscribe('analytics.funnel.updated', handleMessage as any));
+      unsubscribers.push(adminWS.subscribe('analytics.toplists.updated', handleMessage as any));
 
-      if (activeWS.sendMessage) {
-        activeWS.sendMessage({
+      if (adminWS.sendMessage) {
+        adminWS.sendMessage({
           type: 'subscribe' as any,
           payload: {
             clientType: 'admin',
@@ -195,7 +194,8 @@ export function useAdminRealtimeWebSocket(options: UseAdminRealtimeWebSocketOpti
         unsubscribers.forEach(unsub => unsub());
       };
     }
-  }, [adminWS.isConnected, eventsWS.isConnected, useAdminWS, handleMessage, propertyId]);
+    // Note: Events WebSocket uses different pattern and doesn't need explicit subscriptions
+  }, [adminWS.isConnected, adminWS.subscribe, adminWS.sendMessage, useAdminWS, handleMessage, propertyId]);
 
   const isUsingAdminWS = useAdminWS && adminWS.isConnected;
   const isUsingEventsWS = (!useAdminWS || !adminWS.isConnected) && eventsWS.isConnected;
@@ -206,7 +206,7 @@ export function useAdminRealtimeWebSocket(options: UseAdminRealtimeWebSocketOpti
     sendMessage: isUsingAdminWS ? adminWS.sendMessage : eventsWS.sendMessage,
     reconnect: isUsingAdminWS ? adminWS.reconnect : eventsWS.reconnect,
     disconnect: isUsingAdminWS ? adminWS.disconnect : eventsWS.disconnect,
-    connectionType: isUsingAdminWS ? 'admin' : 'events',
+    connectionType: isUsingAdminWS ? 'admin' as const : 'events' as const,
     adminWS: {
       isEnabled: adminWS.isEnabled,
       isConnected: adminWS.isConnected,

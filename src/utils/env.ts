@@ -78,10 +78,15 @@ export const getWebSocketHealthUrl = (): string => {
 export const checkWebSocketServiceHealth = async (): Promise<boolean> => {
   try {
     const healthUrl = getWebSocketHealthUrl();
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
     const response = await fetch(healthUrl, {
       method: 'GET',
-      timeout: 5000
+      signal: controller.signal
     });
+
+    clearTimeout(timeoutId);
     return response.ok;
   } catch (error) {
     console.warn('WebSocket service health check failed:', error);

@@ -1,4 +1,3 @@
-import { getApiBaseUrl } from '../../utils/env';
 
 interface AdminTokenResponse {
   token: string;
