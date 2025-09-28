@@ -40,6 +40,7 @@ interface SessionRecordsTableProps {
   loading?: boolean;
   onSessionClick?: (session: Session) => void;
   title?: string;
+  subtitle?: string;
   useRealtime?: boolean;
   useAnalytics?: boolean;
   timeRange?: TimeRange;
@@ -51,6 +52,7 @@ export const SessionRecordsTable: React.FC<SessionRecordsTableProps> = ({
   loading: propLoading = false,
   onSessionClick,
   title = "Session Records",
+  subtitle,
   useRealtime = false,
   useAnalytics = false,
   timeRange = '24h',
@@ -113,12 +115,16 @@ export const SessionRecordsTable: React.FC<SessionRecordsTableProps> = ({
     }
   }, [useRealtime, realtimeSessions]);
 
-  // Filter sessions based on search term
-  const filteredSessions = sessions.filter((session) =>
-    session.destination.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    session.hotel.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    session.sessionId.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter sessions based on search term - ensure safe filtering
+  const filteredSessions = (sessions || []).filter((session) => {
+    if (!session) return false;
+    const searchLower = (searchTerm || '').toLowerCase();
+    return (
+      (session.destination || '').toLowerCase().includes(searchLower) ||
+      (session.hotel || '').toLowerCase().includes(searchLower) ||
+      (session.sessionId || '').toLowerCase().includes(searchLower)
+    );
+  });
 
   const handleChangePage = (_: unknown, newPage: number) => {
     setPage(newPage);
@@ -150,16 +156,36 @@ export const SessionRecordsTable: React.FC<SessionRecordsTableProps> = ({
   );
 
   const formatDuration = (createdAt: string, updatedAt: string): string => {
+    if (!createdAt || !updatedAt) return '-';
+
     const start = new Date(createdAt);
     const end = new Date(updatedAt);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return '-';
+
     const durationMs = end.getTime() - start.getTime();
+    if (durationMs < 0) return '-';
+
     const minutes = Math.floor(durationMs / (1000 * 60));
     const seconds = Math.floor((durationMs % (1000 * 60)) / 1000);
-    
+
     if (minutes > 0) {
       return `${minutes}m ${seconds}s`;
     }
     return `${seconds}s`;
+  };
+
+  const getTagColor = (tag: string): string => {
+    const tagColors: Record<string, string> = {
+      'SEARCH ENGINE': '#1976d2',
+      'PROSPECTING': '#9c27b0',
+      'SEARCHING': '#2196f3',
+      'FILTERING': '#00bcd4',
+      'HE OPENED': '#4caf50',
+      'BOOKING FORM': '#ff9800',
+      'ABANDONED': '#f44336'
+    };
+    return tagColors[tag] || '#666666';
   };
 
   const paginatedSessions = filteredSessions.slice(
@@ -167,39 +193,81 @@ export const SessionRecordsTable: React.FC<SessionRecordsTableProps> = ({
     page * rowsPerPage + rowsPerPage
   );
 
+  // Convert real sessions to display format
+  const displaySessions = paginatedSessions.map(session => ({
+    sessionId: session.sessionId ? session.sessionId.slice(0, 15) + '...' : 'Unknown',
+    status: `Sessions:${session.status}`,
+    selections: session.currentStage || 1,
+    timestamp: session.updatedAt && !isNaN(new Date(session.updatedAt).getTime())
+      ? format(new Date(session.updatedAt), 'MMM dd, yyyy, hh:mm a')
+      : 'Unknown',
+    tags: generateTagsFromSession(session),
+    statusColor: getStatusColor(session.status) === 'success' ? '#28a745' :
+                 getStatusColor(session.status) === 'error' ? '#dc3545' :
+                 getStatusColor(session.status) === 'warning' ? '#ffc107' : '#17a2b8'
+  }));
+
+  function generateTagsFromSession(session: Session): string[] {
+    const tags = ['SEARCH ENGINE'];
+
+    if (session.destination) tags.push('DESTINATION SELECTED');
+    if (session.hotel) tags.push('HOTEL SELECTED');
+    if (session.currentStage && session.currentStage > 1) tags.push('SEARCHING');
+    if (session.currentStage && session.currentStage > 2) tags.push('FILTERING');
+    if (session.status === 'LIVE') tags.push('ACTIVE');
+    if (session.status === 'CONFIRMED_BOOKING') tags.push('BOOKING FORM');
+    if (session.status === 'ABANDONED') tags.push('ABANDONED');
+
+    return tags;
+  }
+
   return (
-    <Card>
-      <CardContent>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography variant="h6">
-              {title}
-            </Typography>
-            {useRealtime && (
-              <Chip
-                icon={<FiberManualRecord sx={{ fontSize: 10 }} />}
-                label={isConnected ? 'Live' : 'Offline'}
-                color={isConnected ? 'success' : 'default'}
-                size="small"
-                variant="outlined"
-              />
-            )}
+    <Card sx={{
+      borderRadius: '4px',
+      boxShadow: '0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12)',
+      bgcolor: '#ffffff'
+    }}>
+      <CardContent sx={{ p: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+          <Typography sx={{
+            fontWeight: 500,
+            fontSize: '1.25rem',
+            color: 'rgba(0, 0, 0, 0.87)',
+            fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif'
+          }}>
+            {title}
+          </Typography>
+          <Box sx={{
+            bgcolor: '#e3f2fd',
+            color: '#1976d2',
+            px: 1,
+            py: 0.5,
+            borderRadius: '4px',
+            fontSize: '0.75rem',
+            fontWeight: 500,
+            cursor: 'pointer'
+          }}>
+            Force Refresh
           </Box>
-          <TextField
-            size="small"
-            placeholder="Search sessions..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            sx={{ minWidth: 250 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search fontSize="small" />
-                </InputAdornment>
-              ),
-            }}
-          />
         </Box>
+
+        {subtitle && (
+          <Typography sx={{
+            color: 'rgba(0, 0, 0, 0.6)',
+            mb: 2,
+            fontSize: '0.875rem'
+          }}>
+            {subtitle}
+          </Typography>
+        )}
+
+        <Typography sx={{
+          mb: 2,
+          color: 'rgba(0, 0, 0, 0.6)',
+          fontSize: '0.875rem'
+        }}>
+          📊 <strong>Session Summary:</strong> {filteredSessions.length} total visits • <strong>{displaySessions.filter(s => s.selections > 1).length} with interactions</strong> • {displaySessions.filter(s => s.selections === 1).length} minimal activity
+        </Typography>
 
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
@@ -207,121 +275,96 @@ export const SessionRecordsTable: React.FC<SessionRecordsTableProps> = ({
           </Box>
         ) : (
           <>
-            <TableContainer>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Session ID</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Destination</TableCell>
-                    <TableCell>Hotel</TableCell>
-                    <TableCell>Duration</TableCell>
-                    <TableCell>Stage</TableCell>
-                    <TableCell>Updated</TableCell>
-                    <TableCell align="right">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {paginatedSessions.map((session) => (
-                    <TableRow 
-                      key={session.sessionId}
-                      hover
-                      sx={{ 
-                        '&:hover': { 
-                          cursor: onSessionClick ? 'pointer' : 'default' 
-                        } 
-                      }}
-                      onClick={() => onSessionClick?.(session)}
-                    >
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Person fontSize="small" color="action" />
-                          <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-                            {session.sessionId.slice(0, 8)}...
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      
-                      <TableCell>
-                        <Chip
-                          icon={getStatusIcon(session.status)}
-                          label={session.status.replace('_', ' ')}
-                          color={getStatusColor(session.status)}
-                          size="small"
-                          variant="outlined"
-                        />
-                      </TableCell>
-                      
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <LocationOn fontSize="small" color="action" />
-                          <Typography variant="body2">
-                            {session.destination}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <HotelIcon fontSize="small" color="action" />
-                          <Typography variant="body2" noWrap sx={{ maxWidth: 120 }}>
-                            {session.hotel}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <AccessTime fontSize="small" color="action" />
-                          <Typography variant="body2">
-                            {formatDuration(session.createdAt, session.updatedAt)}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      
-                      <TableCell>
-                        <Chip
-                          label={`Stage ${session.currentStage}`}
-                          size="small"
-                          color="primary"
-                          variant="outlined"
-                        />
-                      </TableCell>
-                      
-                      <TableCell>
-                        <Typography variant="body2" color="text.secondary">
-                          {format(new Date(session.updatedAt), 'HH:mm:ss')}
-                        </Typography>
-                      </TableCell>
-                      
-                      <TableCell align="right">
-                        <Tooltip title="View Details">
-                          <IconButton 
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onSessionClick?.(session);
-                            }}
-                          >
-                            <Visibility fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+            {/* Session entries from real data */}
+            <Box sx={{ maxHeight: 400, overflow: 'auto' }}>
+              {displaySessions.map((session, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    p: 1.5,
+                    borderBottom: index < displaySessions.length - 1 ? '1px solid rgba(0, 0, 0, 0.12)' : 'none',
+                    '&:hover': {
+                      bgcolor: 'rgba(0, 0, 0, 0.04)',
+                      cursor: 'pointer'
+                    }
+                  }}
+                  onClick={() => onSessionClick?.(paginatedSessions[index])}
+                >
+                  {/* Main session info row */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <Person sx={{ fontSize: 16, color: 'rgba(0, 0, 0, 0.6)' }} />
+                    <Typography sx={{
+                      fontFamily: 'monospace',
+                      fontWeight: 400,
+                      color: 'rgba(0, 0, 0, 0.87)',
+                      fontSize: '0.875rem'
+                    }}>
+                      {session.sessionId}
+                    </Typography>
+                    <Typography sx={{
+                      color: 'rgba(0, 0, 0, 0.6)',
+                      fontSize: '0.75rem'
+                    }}>
+                      ▽ {session.selections} selections
+                    </Typography>
+                    <Box sx={{
+                      bgcolor: session.statusColor,
+                      color: 'white',
+                      px: 1,
+                      py: 0.25,
+                      borderRadius: '12px',
+                      fontSize: '0.65rem',
+                      fontWeight: 600
+                    }}>
+                      {session.status.replace('Sessions:', '')}
+                    </Box>
+                    <Box sx={{ flex: 1 }} />
+                    <Typography sx={{
+                      color: 'rgba(0, 0, 0, 0.6)',
+                      fontSize: '0.75rem'
+                    }}>
+                      {session.timestamp}
+                    </Typography>
+                  </Box>
 
-            <TablePagination
-              rowsPerPageOptions={[5, 10, 25, 50]}
-              component="div"
-              count={filteredSessions.length}
-              rowsPerPage={rowsPerPage}
-              page={page}
-              onPageChange={handleChangePage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-            />
+                  {/* Journey flow visualization */}
+                  <Box sx={{ ml: 2.5 }}>
+                    <Typography sx={{
+                      color: 'rgba(0, 0, 0, 0.6)',
+                      fontSize: '0.75rem',
+                      mb: 0.5
+                    }}>
+                      🛤️ Journey Flow:
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap' }}>
+                      {session.tags.map((tag, tagIndex) => (
+                        <React.Fragment key={tagIndex}>
+                          <Box sx={{
+                            bgcolor: getTagColor(tag),
+                            color: 'white',
+                            px: 0.75,
+                            py: 0.25,
+                            borderRadius: '12px',
+                            fontSize: '0.65rem',
+                            fontWeight: 500
+                          }}>
+                            {tag}
+                          </Box>
+                          {tagIndex < session.tags.length - 1 && (
+                            <Typography sx={{
+                              color: 'rgba(0, 0, 0, 0.6)',
+                              fontSize: '0.7rem'
+                            }}>
+                              →
+                            </Typography>
+                          )}
+                        </React.Fragment>
+                      ))}
+                    </Box>
+                  </Box>
+                </Box>
+              ))}
+            </Box>
           </>
         )}
 

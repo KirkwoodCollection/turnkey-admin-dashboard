@@ -9,28 +9,29 @@ export default defineConfig({
     port: 3001,
     host: true,
     proxy: {
-      // COMPONENT TESTING: Change target to 'http://localhost:8888' to test individual components
-      // Then run: node test-server.js in a separate terminal
-      '/api/v1': {
-        target: 'https://api.turnkeyhms.com', // Change to 'http://localhost:8888' for testing
+      // Analytics service endpoints
+      '/api/v1/metrics': {
+        target: 'http://localhost:8001',
         changeOrigin: true,
-        secure: true,
+        secure: false,
       },
-      '/api': {
-        target: 'https://api.turnkeyhms.com',
+      '/api/v1/analytics': {
+        target: 'http://localhost:8001',
         changeOrigin: true,
-        secure: true,
+        secure: false,
       },
-      '/sessions': {
-        target: 'https://api.turnkeyhms.com',
+      // Events service admin endpoints
+      '/api/v1/admin': {
+        target: 'http://localhost:8080',
         changeOrigin: true,
-        secure: true,
+        secure: false,
       },
+      // WebSocket service (fallback to Events service for now)
       '/ws': {
-        target: 'wss://api.turnkeyhms.com',
+        target: 'ws://localhost:8080',
         ws: true,
         changeOrigin: true,
-        secure: true,
+        secure: false,
       },
     },
   },

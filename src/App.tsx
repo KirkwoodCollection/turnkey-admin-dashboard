@@ -97,38 +97,40 @@ function App() {
           <CssBaseline />
           <BrowserRouter>
             <AuthProvider>
-              {/* Temporarily bypass AuthGuard to debug */}
-              <WebSocketProvider>
-                <HealthProvider>
-                  <EventsProvider>
-                    <TimeFilterProvider>
-                    <Routes>
-                      <Route path="/" element={
-                        <Layout currentPage="analytics">
-                          <AnalyticsDashboard />
-                        </Layout>
-                      } />
-                      <Route path="/overview" element={
-                        <Layout currentPage="overview">
-                          <Overview />
-                        </Layout>
-                      } />
-                      <Route path="/system-health" element={
-                        <Layout currentPage="system-health">
-                          <SystemHealthDashboard />
-                        </Layout>
-                      } />
-                      <Route path="/analytics" element={
-                        <Layout currentPage="analytics">
-                          <AnalyticsDashboard />
-                        </Layout>
-                      } />
-                      <Route path="*" element={<Navigate to="/" replace />} />
-                    </Routes>
-                    </TimeFilterProvider>
-                  </EventsProvider>
-                </HealthProvider>
-              </WebSocketProvider>
+              <AuthGuard>
+                <WebSocketProvider>
+                  <HealthProvider>
+                    <EventsProvider>
+                      <TimeFilterProvider>
+                        <Routes>
+                          <Route path="/" element={
+                            <Layout currentPage="analytics">
+                              <AnalyticsDashboard />
+                            </Layout>
+                          } />
+                          <Route path="/overview" element={
+                            <Layout currentPage="overview">
+                              <Overview />
+                            </Layout>
+                          } />
+                          <Route path="/system-health" element={
+                            <Layout currentPage="system-health">
+                              <SystemHealthDashboard />
+                            </Layout>
+                          } />
+                          <Route path="/analytics" element={
+                            <Layout currentPage="analytics">
+                              <AnalyticsDashboard />
+                            </Layout>
+                          } />
+                          <Route path="/login" element={<div>Login handled by AuthGuard</div>} />
+                          <Route path="*" element={<Navigate to="/" replace />} />
+                        </Routes>
+                      </TimeFilterProvider>
+                    </EventsProvider>
+                  </HealthProvider>
+                </WebSocketProvider>
+              </AuthGuard>
             </AuthProvider>
           </BrowserRouter>
         </ThemeProvider>

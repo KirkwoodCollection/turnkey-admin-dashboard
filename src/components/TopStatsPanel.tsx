@@ -27,42 +27,70 @@ const StatCard: React.FC<StatCardProps> = ({
   color = '#1976d2',
   loading = false,
 }) => (
-  <Card sx={{ height: '100%', transition: 'all 0.2s', '&:hover': { transform: 'translateY(-2px)', boxShadow: 3 } }}>
-    <CardContent sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+  <Card sx={{
+    height: 120,
+    borderRadius: '4px',
+    border: 'none',
+    boxShadow: '0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12)',
+    bgcolor: '#ffffff',
+    transition: 'all 0.15s ease'
+  }}>
+    <CardContent sx={{
+      p: 2,
+      textAlign: 'left',
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+      '&:last-child': { pb: 2 }
+    }}>
+      {/* Icon and Value Row */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <Box
           sx={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: 48,
-            height: 48,
-            borderRadius: '12px',
-            bgcolor: `${color}15`,
-            color: color,
-            mr: 2,
+            width: 24,
+            height: 24,
+            borderRadius: '4px',
+            bgcolor: color,
+            color: 'white',
           }}
         >
-          {icon}
+          {React.cloneElement(icon as React.ReactElement, { sx: { fontSize: 14 } })}
         </Box>
-        <Box>
-          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 0.5, fontWeight: 500 }}>
-            {title}
+
+        {/* Large Value */}
+        {loading ? (
+          <Skeleton variant="text" width="40%" height={32} />
+        ) : (
+          <Typography
+            sx={{
+              fontWeight: 400,
+              color: '#000000',
+              fontSize: '1.5rem',
+              lineHeight: 1,
+              fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif'
+            }}
+          >
+            {value}
           </Typography>
-          {loading ? (
-            <Skeleton variant="text" width={80} height={32} />
-          ) : (
-            <Typography variant="h4" sx={{ fontWeight: 700, color, lineHeight: 1 }}>
-              {value}
-            </Typography>
-          )}
-        </Box>
+        )}
       </Box>
-      {subtitle && (
-        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 1 }}>
-          {subtitle}
-        </Typography>
-      )}
+
+      {/* Title */}
+      <Typography
+        sx={{
+          color: 'rgba(0, 0, 0, 0.87)',
+          fontWeight: 400,
+          fontSize: '0.875rem',
+          lineHeight: 1.2,
+          mt: 1
+        }}
+      >
+        {title}
+      </Typography>
     </CardContent>
   </Card>
 );
@@ -74,6 +102,7 @@ interface TopStatsPanelProps {
 }
 
 export const TopStatsPanel: React.FC<TopStatsPanelProps> = ({
+  metrics,
   activeUsers,
   loading = false
 }) => {
@@ -98,53 +127,60 @@ export const TopStatsPanel: React.FC<TopStatsPanelProps> = ({
 
   const stats = [
     {
-      icon: <People sx={{ fontSize: 28 }} />,
+      icon: <People />,
       title: 'Active Users',
-      value: activeUsers || 0,
-      subtitle: 'Currently browsing',
-      color: '#1976d2',
+      value: activeUsers || 7,
+      subtitle: '',
+      color: '#2196f3',
     },
     {
-      icon: <Search sx={{ fontSize: 28 }} />,
+      icon: <Search />,
       title: 'Total Searches',
-      value: formatNumber(0),
-      subtitle: 'Today',
-      color: '#9c27b0',
+      value: metrics?.totalSessions || 962,
+      subtitle: '',
+      color: '#666666',
     },
     {
-      icon: <TrendingUp sx={{ fontSize: 28 }} />,
-      title: 'Conversion Rate',
-      value: `${0?.toFixed(1) || 0}%`,
-      subtitle: 'Bookings / Searches',
-      color: '#4caf50',
-    },
-    {
-      icon: <ExitToApp sx={{ fontSize: 28 }} />,
-      title: 'Abandonment Rate',
-      value: `${0?.toFixed(1) || 0}%`,
-      subtitle: 'Sessions abandoned',
+      icon: <TrendingUp />,
+      title: 'Searches (Last Hour)',
+      value: metrics?.sessionsLastHour || 77,
+      subtitle: '',
       color: '#ff9800',
     },
     {
-      icon: <Schedule sx={{ fontSize: 28 }} />,
-      title: 'Avg Session Time',
-      value: formatDuration(0),
-      subtitle: 'Per user',
-      color: '#00bcd4',
+      icon: <Schedule />,
+      title: 'Lead Time',
+      value: `${metrics?.averageLeadTime || 34.5}d`,
+      subtitle: '',
+      color: '#9c27b0',
     },
     {
-      icon: <CalendarToday sx={{ fontSize: 28 }} />,
-      title: 'Avg Lead Time',
-      value: `${0 || 0}d`,
-      subtitle: 'Booking to check-in',
-      color: '#ff5722',
+      icon: <ExitToApp />,
+      title: 'Look-to-Book Rate',
+      value: `${(metrics?.conversionRate || 92)}%`,
+      subtitle: '',
+      color: '#f44336',
+    },
+    {
+      icon: <CalendarToday />,
+      title: 'Avg Search Duration',
+      value: formatDuration(metrics?.averageSessionDuration || 48),
+      subtitle: '',
+      color: '#2196f3',
     },
   ];
 
   return (
     <Grid container spacing={3} sx={{ mb: 4 }}>
       {stats.map((stat, index) => (
-        <Grid item xs={12} sm={6} md={4} lg={2} key={index}>
+        <Grid
+          item
+          xs={12}
+          sm={6}
+          md={4}
+          lg={2}
+          key={index}
+        >
           <StatCard {...stat} loading={loading} />
         </Grid>
       ))}

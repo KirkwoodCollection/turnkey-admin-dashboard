@@ -7,7 +7,7 @@ To deploy the Admin Dashboard with proper API authentication, add these secrets 
 ### Analytics Service Authentication
 ```
 Name: VITE_ANALYTICS_API_KEY
-Value: analytics-prod-37341e59036fdca793c95437e5ba178a888bb3aeaca11c281cae796dde91995b
+Value: [OBTAIN FROM ANALYTICS TEAM - PREVIOUS KEY COMPROMISED]
 ```
 
 ### Events Service Authentication (PENDING)

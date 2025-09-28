@@ -10,6 +10,7 @@ import { EventFilters } from '../components/EventFilters';
 import { EventCategoryChart } from '../components/EventCategoryChart';
 import { EventImportanceChart } from '../components/EventImportanceChart';
 import { UserJourney } from '../components/UserJourney';
+import { DataValidationDashboard } from '../components/DataValidationDashboard';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useLiveEvents } from '../hooks/useLiveEvents';
 import { useQuery } from '@tanstack/react-query';
@@ -185,15 +186,141 @@ export const Overview: React.FC = () => {
 
   return (
     <Box sx={{ width: '100%' }}>
-      {/* Top Statistics Cards - Always visible */}
-      <TopStatsPanel 
+      {/* Dashboard Header - Simple Layout */}
+      <Box sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        mb: 3,
+        pb: 2,
+        borderBottom: '1px solid #e0e0e0'
+      }}>
+        <Typography variant="h4" sx={{
+          fontWeight: 400,
+          color: '#000000',
+          fontSize: '2.125rem',
+          fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif'
+        }}>
+          Real-Time Analytics Dashboard
+        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Typography variant="caption" sx={{
+            color: 'rgba(0, 0, 0, 0.6)',
+            fontSize: '0.875rem'
+          }}>
+            Last updated: Aug 29, 2024, 06:17 PM
+          </Typography>
+          <Box sx={{
+            bgcolor: '#e8f5e8',
+            color: '#2e7d32',
+            px: 1,
+            py: 0.5,
+            borderRadius: '4px',
+            fontSize: '0.75rem',
+            fontWeight: 500,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.5
+          }}>
+            <Box sx={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              bgcolor: '#4caf50'
+            }} />
+            Real-time Connected
+          </Box>
+          <Box sx={{
+            bgcolor: '#e3f2fd',
+            color: '#1976d2',
+            px: 1,
+            py: 0.5,
+            borderRadius: '4px',
+            fontSize: '0.75rem',
+            fontWeight: 500,
+            cursor: 'pointer'
+          }}>
+            Refresh
+          </Box>
+          <Box sx={{
+            color: '#666666',
+            px: 1,
+            py: 0.5,
+            fontSize: '0.75rem',
+            cursor: 'pointer'
+          }}>
+            Force Refresh
+          </Box>
+          <Box sx={{
+            bgcolor: '#fff3e0',
+            color: '#e65100',
+            px: 1,
+            py: 0.5,
+            borderRadius: '4px',
+            fontSize: '0.75rem',
+            fontWeight: 500
+          }}>
+            🔍 Debug OFF
+          </Box>
+        </Box>
+      </Box>
+
+      {/* Time Filter Row */}
+      <Box sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1,
+        mb: 3
+      }}>
+        <Box sx={{ color: '#666666', mr: 1 }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M10,18c1.846,0,3.543-0.635,4.897-1.688l4.396,4.396l1.414-1.414l-4.396-4.396C17.365,13.543,18,11.846,18,10 c0-4.411-3.589-8-8-8s-8,3.589-8,8S5.589,18,10,18z M10,4c3.309,0,6,2.691,6,6s-2.691,6-6,6s-6-2.691-6-6S6.691,4,10,4z"/>
+          </svg>
+        </Box>
+        <Typography sx={{
+          color: 'rgba(0, 0, 0, 0.6)',
+          fontSize: '0.875rem',
+          mr: 1
+        }}>
+          Time Filter:
+        </Typography>
+        {[
+          { label: 'All Time', value: 'all', active: true },
+          { label: 'Today', value: 'today', active: false },
+          { label: 'This Week', value: 'week', active: false },
+          { label: 'This Month', value: 'month', active: false }
+        ].map((filter) => (
+          <Box
+            key={filter.value}
+            sx={{
+              px: 2,
+              py: 0.5,
+              borderRadius: '4px',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              cursor: 'pointer',
+              bgcolor: filter.active ? '#1976d2' : 'transparent',
+              color: filter.active ? 'white' : '#1976d2',
+              border: '1px solid #1976d2',
+              '&:hover': {
+                bgcolor: filter.active ? '#1565c0' : 'rgba(25, 118, 210, 0.04)'
+              }
+            }}
+          >
+            {filter.label}
+          </Box>
+        ))}
+      </Box>
+
+      {/* Top Statistics Cards */}
+      <TopStatsPanel
         metrics={metrics || null}
         activeUsers={activeUsers}
         loading={dashboardLoading}
       />
 
       {/* Analytics Tabs */}
-      <Paper sx={{ mt: 3 }}>
+      <Paper sx={{ mt: 3, border: '1px solid #e0e0e0' }}>
         <Tabs 
           value={tabValue} 
           onChange={handleTabChange} 
@@ -206,33 +333,83 @@ export const Overview: React.FC = () => {
           <Tab label="Event Analytics" id="analytics-tab-1" />
           <Tab label="Conversion Funnel" id="analytics-tab-2" />
           <Tab label="User Journeys" id="analytics-tab-3" />
-          <Tab label="Legacy Reports" id="analytics-tab-4" />
+          <Tab label="Data Validation" id="analytics-tab-4" />
+          <Tab label="Legacy Reports" id="analytics-tab-5" />
         </Tabs>
 
-        {/* Tab 0: Overview */}
+        {/* Tab 0: Overview - Main Dashboard Layout */}
         <TabPanel value={tabValue} index={0}>
-          <Grid container spacing={3}>
-            {/* Enhanced Conversion Funnel */}
+          {/* Three Column Section Header */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h5" sx={{
+              fontWeight: 600,
+              color: '#1a1a1a',
+              fontSize: '1.25rem',
+              mb: 1,
+              fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+            }}>
+              Key Performance Metrics
+            </Typography>
+            <Typography variant="body2" sx={{
+              color: '#666666',
+              fontSize: '0.875rem'
+            }}>
+              Real-time insights into destination performance, hotel analytics, and conversion funnel metrics
+            </Typography>
+          </Box>
+
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            {/* Three Panel Layout - Top Destinations, Top Hotels, Funnel Stats */}
+            <Grid item xs={12} lg={4}>
+              <TopMetricsPanels
+                topDestinations={topDestinations}
+                topHotels={[]} // Will be empty for destinations panel
+                funnelStats={[]}
+                loading={dashboardLoading}
+                panelType="destinations"
+              />
+            </Grid>
+
+            <Grid item xs={12} lg={4}>
+              <TopMetricsPanels
+                topDestinations={[]}
+                topHotels={topHotels}
+                funnelStats={[]}
+                loading={dashboardLoading}
+                panelType="hotels"
+              />
+            </Grid>
+
+            <Grid item xs={12} lg={4}>
+              <TopMetricsPanels
+                topDestinations={[]}
+                topHotels={[]}
+                funnelStats={funnelStats}
+                loading={dashboardLoading}
+                panelType="funnel"
+              />
+            </Grid>
+          </Grid>
+
+          {/* User Journey Analytics - Large Heatmap */}
+          <Grid container spacing={3} sx={{ mt: 2 }}>
             <Grid item xs={12}>
-              <ConversionFunnel 
-                events={filteredEvents}
+              <HeatmapCalendar
+                data={heatmapData}
                 loading={dashboardLoading}
                 height={400}
+                title="User Journey Analytics"
+                subtitle="Destination exploration patterns and selection evolution"
               />
             </Grid>
-            
-            {/* Event Analytics Row */}
-            <Grid item xs={12} md={6}>
-              <EventCategoryChart 
-                events={filteredEvents}
-                height={300}
-              />
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <EventImportanceChart 
-                events={filteredEvents}
-                height={300}
+
+            {/* Session Records Table */}
+            <Grid item xs={12}>
+              <SessionRecordsTable
+                useRealtime={true}
+                title="Session Records"
+                subtitle="User journeys with destination breakdown tracking"
+                onSessionClick={handleSessionClick}
               />
             </Grid>
           </Grid>
@@ -293,10 +470,10 @@ export const Overview: React.FC = () => {
                 Individual user journeys through the booking flow
               </Typography>
             </Grid>
-            
+
             {uniqueSessionIds.map(sessionId => (
               <Grid item xs={12} md={6} xl={4} key={sessionId}>
-                <UserJourney 
+                <UserJourney
                   sessionId={sessionId}
                   events={filteredEvents}
                   compact={true}
@@ -304,7 +481,7 @@ export const Overview: React.FC = () => {
                 />
               </Grid>
             ))}
-            
+
             {uniqueSessionIds.length === 0 && (
               <Grid item xs={12}>
                 <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'grey.50' }}>
@@ -317,8 +494,13 @@ export const Overview: React.FC = () => {
           </Grid>
         </TabPanel>
 
-        {/* Tab 4: Legacy Reports */}
+        {/* Tab 4: Data Validation */}
         <TabPanel value={tabValue} index={4}>
+          <DataValidationDashboard />
+        </TabPanel>
+
+        {/* Tab 5: Legacy Reports */}
+        <TabPanel value={tabValue} index={5}>
           <Grid container spacing={3}>
             {/* Legacy Funnel Chart */}
             <Grid item xs={12} lg={8}>
@@ -352,8 +534,8 @@ export const Overview: React.FC = () => {
             {/* Sessions Table */}
             <Grid item xs={12} lg={5}>
               <SessionRecordsTable
-                sessions={allSessions}
-                loading={dashboardLoading}
+                useRealtime={true}
+                title="Live Session Records"
                 onSessionClick={handleSessionClick}
               />
             </Grid>

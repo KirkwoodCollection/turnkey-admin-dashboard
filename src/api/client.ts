@@ -30,7 +30,7 @@ class ApiClient {
       timeout: 10000,
       headers: {
         'Content-Type': 'application/json',
-        'X-Internal-API-Key': (import.meta as any).env.VITE_EVENTS_INTERNAL_API_KEY || '',
+        'X-API-Key': (import.meta as any).env.VITE_EVENTS_API_KEY || '',
       },
     });
 
@@ -52,10 +52,21 @@ class ApiClient {
     instances.forEach(instance => {
       // Request interceptor
       instance.interceptors.request.use(
-        (config) => {
-          const token = localStorage.getItem('authToken');
-          if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
+        async (config) => {
+          // Try to get Firebase auth token
+          try {
+            const { auth } = await import('../config/firebase');
+            if (auth && auth.currentUser) {
+              const token = await auth.currentUser.getIdToken();
+              config.headers.Authorization = `Bearer ${token}`;
+            }
+          } catch (error) {
+            console.warn('Could not get Firebase auth token:', error);
+            // Fallback to localStorage token if available
+            const token = localStorage.getItem('authToken');
+            if (token) {
+              config.headers.Authorization = `Bearer ${token}`;
+            }
           }
           return config;
         },
@@ -77,6 +88,7 @@ class ApiClient {
                 await this.refreshToken();
                 return instance(originalRequest);
               } catch (refreshError) {
+                // Auth refresh failed, redirect to login
                 this.redirectToLogin();
                 return Promise.reject(refreshError);
               } finally {

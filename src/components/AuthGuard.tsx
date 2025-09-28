@@ -18,9 +18,27 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
 
     try {
       await loginWithGoogle();
-    } catch (error) {
-      setLoginError('Google authentication failed. Please try again.');
-      console.error('Google login error:', error);
+    } catch (error: any) {
+      console.error('Google login error details:', {
+        error,
+        code: error?.code,
+        message: error?.message,
+        customData: error?.customData
+      });
+
+      let errorMessage = 'Google authentication failed. Please try again.';
+
+      if (error?.code === 'auth/popup-blocked') {
+        errorMessage = 'Popup blocked. Please allow popups for this site.';
+      } else if (error?.code === 'auth/popup-closed-by-user') {
+        errorMessage = 'Login was cancelled.';
+      } else if (error?.code === 'auth/configuration-not-found') {
+        errorMessage = 'Firebase configuration error. Please check setup.';
+      } else if (error?.message) {
+        errorMessage = `Authentication error: ${error.message}`;
+      }
+
+      setLoginError(errorMessage);
     } finally {
       setLoginLoading(false);
     }

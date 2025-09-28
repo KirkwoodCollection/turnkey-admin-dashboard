@@ -36,13 +36,24 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
   const messageQueue = useRef<Set<string>>(new Set()); // For deduplication
   const listeners = useRef<Map<string, ((message: WebSocketMessage) => void)[]>>(new Map());
 
-  const connect = useCallback(() => {
+  const connect = useCallback(async () => {
     try {
-      const token = localStorage.getItem('authToken');
-      const wsUrl = token 
-        ? `${url}?token=${encodeURIComponent(token)}` 
+      // Get Firebase Auth token dynamically
+      let token = null;
+      try {
+        const { auth } = await import('../config/firebase');
+        const { getIdToken } = await import('firebase/auth');
+        if (auth?.currentUser) {
+          token = await getIdToken(auth.currentUser);
+        }
+      } catch (authError) {
+        console.warn('Could not get Firebase auth token:', authError);
+      }
+
+      const wsUrl = token
+        ? `${url}?token=${encodeURIComponent(token)}`
         : url;
-      
+
       ws.current = new WebSocket(wsUrl);
       
       ws.current.onopen = () => {
@@ -204,8 +215,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
   };
 
   useEffect(() => {
-    // Temporarily disabled WebSocket to stop console flooding
-    // connect();
+    connect();
     return () => {
       disconnect();
     };

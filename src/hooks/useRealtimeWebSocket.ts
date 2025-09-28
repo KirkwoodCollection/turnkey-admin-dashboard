@@ -97,13 +97,9 @@ export function useRealtimeWebSocket(options: UseRealtimeWebSocketOptions = {}) 
   // Use the WebSocket Service URL with client_type parameter
   // Note: useWebSocket hook will add the token parameter automatically
   const getWebSocketServiceUrl = () => {
-    // For production: Try the direct WebSocket service URL
-    // For development: Use proxy through dev server
+    // For development: Connect to Events service WebSocket (port 8080) until dedicated WebSocket service is available
     if (process.env.NODE_ENV === 'development') {
-      // In dev, try common WebSocket paths that might work
-      const protocol = 'ws:';
-      const host = window.location.host;
-      const baseUrl = `${protocol}//${host}/ws`; // Try simpler path
+      const baseUrl = 'ws://localhost:8080/ws';
       const params = new URLSearchParams();
 
       params.append('client_type', 'admin');
@@ -114,7 +110,7 @@ export function useRealtimeWebSocket(options: UseRealtimeWebSocketOptions = {}) 
 
       return `${baseUrl}?${params.toString()}`;
     } else {
-      // In production, try the direct WebSocket endpoint
+      // In production, connect to WebSocket service endpoint
       const baseUrl = 'wss://api.turnkeyhms.com/ws';
       const params = new URLSearchParams();
 

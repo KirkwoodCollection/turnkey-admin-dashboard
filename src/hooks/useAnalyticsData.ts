@@ -22,13 +22,21 @@ const ANALYTICS_QUERY_KEYS = {
   realtimeMetrics: (propertyId?: string) => ['analytics', 'realtime', propertyId],
 };
 
-// Top metrics hook - uses Analytics API ONLY
+// Top metrics hook - uses Analytics API overview endpoint
 export function useTopMetrics(timeRange: TimeRange = '24h', propertyId?: string) {
   return useQuery({
     queryKey: ANALYTICS_QUERY_KEYS.topMetrics(timeRange, propertyId),
     queryFn: async (): Promise<TopMetrics> => {
       const { analyticsApi } = await import('../services/analyticsApi');
-      return await analyticsApi.getTopMetrics(timeRange, propertyId);
+      const overviewData = await analyticsApi.getOverview(timeRange, propertyId);
+      return {
+        activeUsers: overviewData.realtime.active_sessions,
+        totalSearches: overviewData.conversion.total_sessions,
+        bookRate: overviewData.conversion.conversion_rate * 100,
+        leadTime: 0, // Not available in current API
+        avgSearchDuration: 0, // Not available in current API
+        timestamp: overviewData.timestamp
+      };
     },
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
@@ -36,23 +44,26 @@ export function useTopMetrics(timeRange: TimeRange = '24h', propertyId?: string)
   });
 }
 
-// Funnel data hook - returns empty data
+// Funnel data hook - uses Analytics API funnel endpoint
 export function useFunnelData(timeRange: TimeRange = '24h', propertyId?: string) {
   return useQuery({
     queryKey: ANALYTICS_QUERY_KEYS.funnelData(timeRange, propertyId),
     queryFn: async (): Promise<FunnelStage[]> => {
-      return [];
+      const { analyticsApi } = await import('../services/analyticsApi');
+      const response = await analyticsApi.getFunnelData(timeRange, propertyId);
+      return response.funnel || [];
     },
     staleTime: 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
 }
 
-// Top destinations hook - returns empty data
+// Top destinations hook - endpoint not available, return empty array for now
 export function useTopDestinations(timeRange: TimeRange = '24h', limit = 10, propertyId?: string) {
   return useQuery({
     queryKey: ANALYTICS_QUERY_KEYS.topDestinations(timeRange, limit, propertyId),
     queryFn: async (): Promise<TopDestination[]> => {
+      // Endpoint /top/destinations doesn't exist in current Analytics API
       return [];
     },
     staleTime: 2 * 60 * 1000,
@@ -60,11 +71,12 @@ export function useTopDestinations(timeRange: TimeRange = '24h', limit = 10, pro
   });
 }
 
-// Top hotels hook - returns empty data
+// Top hotels hook - endpoint not available, return empty array for now
 export function useTopHotels(timeRange: TimeRange = '24h', limit = 10, propertyId?: string) {
   return useQuery({
     queryKey: ANALYTICS_QUERY_KEYS.topHotels(timeRange, limit, propertyId),
     queryFn: async (): Promise<TopHotel[]> => {
+      // Endpoint /top/hotels doesn't exist in current Analytics API
       return [];
     },
     staleTime: 2 * 60 * 1000,
@@ -130,20 +142,21 @@ export function useHeatmapData(timeRange: TimeRange = '7d', propertyId?: string)
   });
 }
 
-// Real-time metrics hook - uses real sessions data
+// Real-time metrics hook - uses Analytics API overview endpoint
 export function useRealtimeAnalyticsMetrics(propertyId?: string) {
   return useQuery({
     queryKey: ANALYTICS_QUERY_KEYS.realtimeMetrics(propertyId),
     queryFn: async (): Promise<RealtimeMetrics> => {
-      const sessionsData = await getSessionsData();
+      const { analyticsApi } = await import('../services/analyticsApi');
+      const overviewData = await analyticsApi.getOverview('24h', propertyId);
       return {
-        active_sessions: sessionsData.active_sessions,
-        events_last_hour: sessionsData.total_events_today,
+        active_sessions: overviewData.realtime.active_sessions,
+        events_last_hour: overviewData.realtime.events_last_hour,
         events_last_15_minutes: 0,
-        events_by_type: {},
-        avg_events_per_session: 0,
-        peak_concurrent_sessions: sessionsData.active_sessions,
-        timestamp: sessionsData.timestamp
+        events_by_type: overviewData.realtime.events_by_type || {},
+        avg_events_per_session: overviewData.realtime.avg_events_per_session,
+        peak_concurrent_sessions: overviewData.realtime.active_sessions,
+        timestamp: overviewData.timestamp
       };
     },
     staleTime: 5 * 1000,

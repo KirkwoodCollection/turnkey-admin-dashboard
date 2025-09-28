@@ -39,6 +39,7 @@ import Plot from 'react-plotly.js';
 import { useDashboardData, useExportAnalytics } from '../hooks/useAnalyticsData';
 import { useRealtimeWebSocket } from '../hooks/useRealtimeWebSocket';
 import { useEvents } from '../contexts/EventsContext';
+import { SessionRecordsTable } from '../components/SessionRecordsTable';
 import { TimeRange } from '../services/analyticsApi';
 
 // Time Filter Constants for sophisticated UI
@@ -93,19 +94,19 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
 
   // ONLY REAL API DATA - NO FALLBACKS WHATSOEVER
   const liveStats = useMemo(() => ({
-    activeUsers: dashboardData?.topMetrics?.data?.activeUsers,
-    totalSearches: dashboardData?.topMetrics?.data?.totalSearches,
-    searchesLastHour: dashboardData?.realtimeMetrics?.data?.events_last_hour,
-    leadTime: dashboardData?.topMetrics?.data?.leadTime,
-    conversionRate: dashboardData?.topMetrics?.data?.bookRate,
-    abandonmentRate: dashboardData?.topMetrics?.data?.bookRate ? (100 - dashboardData.topMetrics.data.bookRate) : undefined,
-    avgSearchDuration: dashboardData?.topMetrics?.data?.avgSearchDuration
+    activeUsers: dashboardData.topMetrics.data?.activeUsers,
+    totalSearches: dashboardData.topMetrics.data?.totalSearches,
+    searchesLastHour: dashboardData.realtimeMetrics.data?.events_last_hour,
+    leadTime: dashboardData.topMetrics.data?.leadTime,
+    conversionRate: dashboardData.topMetrics.data?.bookRate,
+    abandonmentRate: dashboardData.topMetrics.data?.bookRate ? (100 - dashboardData.topMetrics.data.bookRate) : undefined,
+    avgSearchDuration: dashboardData.topMetrics.data?.avgSearchDuration
   }), [dashboardData]);
 
   // ONLY REAL API DATA - NO EMPTY ARRAY FALLBACKS
-  const topDestinations = dashboardData?.topDestinations?.data?.destinations;
-  const topHotels = dashboardData?.topHotels?.data?.hotels;
-  const funnelData = dashboardData?.funnelData?.data?.funnel;
+  const topDestinations = dashboardData.topDestinations.data;
+  const topHotels = dashboardData.topHotels.data;
+  const funnelData = dashboardData.funnelData.data;
   const sessionsData = dashboardData?.sessions?.data;
 
   // Heatmap data from real Analytics API - NO MOCK DATA
@@ -596,52 +597,12 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
       {/* Session Records & Recent Activity */}
       <Grid container spacing={3}>
         <Grid item xs={12} lg={8}>
-          <Paper sx={{ p: 3, mb: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h5">
-                Session Records
-                <Typography variant="body2" color="text.secondary" component="span" sx={{ ml: 2 }}>
-                  User journeys with selection evolution tracking
-                </Typography>
-              </Typography>
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<Refresh />}
-                onClick={handleRefreshAll}
-                sx={{ fontSize: '0.75rem' }}
-              >
-                Force Refresh
-              </Button>
-            </Box>
-            {sessionsData?.sessions?.length ? (
-              <Box sx={{ maxHeight: 320, overflow: 'auto' }}>
-                {sessionsData.sessions.map((session, index) => (
-                  <Box key={session.id} sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    py: 2,
-                    borderBottom: index < sessionsData.sessions.length - 1 ? 1 : 0,
-                    borderColor: 'divider'
-                  }}>
-                    <Box>
-                      <Typography variant="body1" fontWeight="medium">
-                        {session.id}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {session.stage} • {new Date(session.timestamp).toLocaleTimeString()}
-                      </Typography>
-                    </Box>
-                  </Box>
-                ))}
-              </Box>
-            ) : (
-              <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-                No session data available
-              </Typography>
-            )}
-          </Paper>
+          <SessionRecordsTable
+            useRealtime={true}
+            propertyId={propertyId}
+            title="Live Session Records"
+            onSessionClick={(session) => console.log('Session clicked:', session)}
+          />
         </Grid>
 
         <Grid item xs={12} lg={4}>
