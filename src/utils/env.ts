@@ -16,7 +16,7 @@ export const getEnvVar = (key: keyof ImportMetaEnv, defaultValue: string = ''): 
 };
 
 export const getWebSocketUrl = (): string => {
-  return getEnvVar('VITE_WEBSOCKET_URL', 'ws://localhost:8080/ws');
+  return getEnvVar('VITE_WEBSOCKET_URL', 'ws://localhost:8002/ws');
 };
 
 export const getApiBaseUrl = (): string => {
@@ -66,4 +66,25 @@ export const useAdminApiService = (): boolean => {
 // WebSocket service availability check
 export const useWebSocketService = (): boolean => {
   return getFeatureFlag('USE_WEBSOCKET_SERVICE', false);
+};
+
+// WebSocket service health check URL
+export const getWebSocketHealthUrl = (): string => {
+  const isDev = process.env.NODE_ENV === 'development';
+  return isDev ? 'http://localhost:8002/health' : 'https://api.turnkeyhms.com/ws/health';
+};
+
+// Check WebSocket service availability
+export const checkWebSocketServiceHealth = async (): Promise<boolean> => {
+  try {
+    const healthUrl = getWebSocketHealthUrl();
+    const response = await fetch(healthUrl, {
+      method: 'GET',
+      timeout: 5000
+    });
+    return response.ok;
+  } catch (error) {
+    console.warn('WebSocket service health check failed:', error);
+    return false;
+  }
 };

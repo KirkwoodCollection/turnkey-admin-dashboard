@@ -97,9 +97,9 @@ export function useRealtimeWebSocket(options: UseRealtimeWebSocketOptions = {}) 
   // Use the WebSocket Service URL with client_type parameter
   // Note: useWebSocket hook will add the token parameter automatically
   const getWebSocketServiceUrl = () => {
-    // For development: Connect to Events service WebSocket (port 8080) until dedicated WebSocket service is available
+    // For development: Connect to dedicated WebSocket service (port 8002) per ADR-001
     if (process.env.NODE_ENV === 'development') {
-      const baseUrl = 'ws://localhost:8080/ws';
+      const baseUrl = 'ws://localhost:8002/ws';
       const params = new URLSearchParams();
 
       params.append('client_type', 'admin');
