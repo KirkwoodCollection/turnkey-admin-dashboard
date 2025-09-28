@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Session, Event } from '../types';
-import { useRealtimeWebSocket } from '../hooks/useRealtimeWebSocket';
+import { useAdminRealtimeWebSocket } from '../hooks/useAdminRealtimeWebSocket';
 import { useActiveSessions, useRealtimeMetrics } from '../hooks/useEventsApi';
 
 interface EventsContextValue {
   // Connection status
   isConnected: boolean;
   connectionError: Error | null;
+  connectionType?: 'admin' | 'events';
   
   // Session data
   activeSessions: Session[];
@@ -66,8 +67,8 @@ export const EventsProvider: React.FC<EventsProviderProps> = ({
   // Fetch real-time metrics
   const { data: metrics } = useRealtimeMetrics(selectedPropertyId || undefined);
 
-  // WebSocket connection
-  const { isConnected, error: connectionError } = useRealtimeWebSocket({
+  // Admin WebSocket connection with fallback
+  const { isConnected, error: connectionError, connectionType } = useAdminRealtimeWebSocket({
     propertyId: selectedPropertyId || undefined,
     onSessionUpdate: (session: Session) => {
       // Update session history
@@ -149,6 +150,7 @@ export const EventsProvider: React.FC<EventsProviderProps> = ({
   const value: EventsContextValue = {
     isConnected,
     connectionError,
+    connectionType,
     activeSessions,
     sessionHistory,
     recentEvents,

@@ -3,6 +3,8 @@
 ## Overview
 This directory contains comprehensive documentation for the TurnkeyHMS Admin Dashboard web application.
 
+**🔄 ADR-002 Migration Completed**: As of December 2024, the Admin Dashboard has migrated from Events WebSocket to dedicated Admin WebSocket with JWT authentication per ADR-002. All documentation reflects the new architecture.
+
 ## Directory Structure
 
 ```
@@ -86,7 +88,7 @@ The architecture documentation in this directory has been verified against the a
 - ✅ **API Endpoints**: Confirmed via `src/api/` and `src/services/`
 - ✅ **Authentication**: Verified Firebase Auth integration
 - ✅ **Component Structure**: Matched against `src/components/` organization
-- ✅ **Service Integration**: Confirmed WebSocket and API client patterns
+- ✅ **Service Integration**: Confirmed Admin WebSocket with JWT authentication (ADR-002)
 - ✅ **Data Flow**: Validated Analytics Service as primary data source
 
 **Last Verification**: Current codebase analysis  

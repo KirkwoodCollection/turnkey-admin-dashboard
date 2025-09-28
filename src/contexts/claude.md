@@ -5,7 +5,15 @@ Application-wide state management for cross-cutting concerns.
 
 ## Context Organization
 
-### WebSocketContext
+### EventsContext (ADR-002 Updated)
+- Admin WebSocket connection state via `useAdminRealtimeWebSocket`
+- JWT-authenticated real-time connections
+- Fallback to Events WebSocket when needed
+- Connection type tracking (admin vs events)
+- Event subscription handling
+- Automatic reconnection with token refresh
+
+### WebSocketContext (Legacy - for non-admin connections)
 - Global WebSocket connection state
 - Connection status management
 - Event subscription handling

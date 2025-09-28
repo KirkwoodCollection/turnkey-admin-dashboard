@@ -1,8 +1,20 @@
 # Admin Dashboard - Events Service Integration Plan
 
-## 🎯 Overview
+## ⚠️ DEPRECATED - ADR-002 Migration Completed
 
-This document outlines the integration plan for the Admin Dashboard to leverage the enhanced TurnkeyHMS Events service capabilities. The integration provides real-time session monitoring, live statistics, and comprehensive booking funnel analytics.
+**Status**: This integration plan has been **SUPERSEDED** by ADR-002 implementation.
+
+**New Architecture**: Admin Dashboard now uses dedicated Admin WebSocket with JWT authentication from Session service, eliminating direct dependency on Events service for real-time data.
+
+**Migration Completed**: December 2024
+
+---
+
+## 🎯 Original Overview (For Historical Reference)
+
+This document outlined the integration plan for the Admin Dashboard to leverage the enhanced TurnkeyHMS Events service capabilities. The integration provided real-time session monitoring, live statistics, and comprehensive booking funnel analytics.
+
+**Note**: This approach has been replaced by the Admin WebSocket architecture per ADR-002.
 
 ## 📋 Integration Requirements
 

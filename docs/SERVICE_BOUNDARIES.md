@@ -22,8 +22,9 @@ Deliver the hotelier-facing UI/UX, compose views across services, and handle adm
 
 #### CONSUMES
 - **Analytics API**: For all KPIs, funnels, heatmaps, top lists, trends (pre-computed)
-- **WebSocket feed**: From Session/Events for live activity display
-- **Firebase Auth**: Token validation only (does not issue tokens)
+- **Admin WebSocket**: JWT-authenticated real-time connection for live activity display
+- **Session Service**: Admin JWT token acquisition for WebSocket authentication
+- **Firebase Auth**: Token validation for Session service authentication
 
 #### DOES NOT
 - ❌ Query BigQuery directly
@@ -94,14 +95,14 @@ Own session lifecycle, ingest events, and broadcast real-time updates to subscri
 
 ## 📊 Data Flow Architecture
 
-### Real-Time Flow (< 1 minute)
+### Real-Time Flow (< 1 minute) - ADR-002 Compliant
 ```
 User Action → Events Service → Firestore
                     ↓
                 Pub/Sub
                 ↙        ↘
-        WebSocket      Analytics
-        Broadcast      (RT cache)
+        Admin WS       Analytics
+       (JWT Auth)     (RT cache)
             ↓              ↓
         Admin UI    Analytics API
 ```
@@ -133,13 +134,13 @@ Events → BigQuery (batch load)
 | UI Module | Data Type | Source Service | Display Method |
 |-----------|-----------|---------------|----------------|
 | **KPI Tiles** | Aggregated metrics | Analytics API | Custom UI or Grafana |
-| **Live Session List** | Real-time events | WebSocket (Events) | Custom UI only |
+| **Live Session List** | Real-time events | Admin WebSocket | Custom UI only |
 | **2D Heatmap** | Computed matrix | Analytics API | Grafana preferred |
 | **Funnel Visualization** | Stage counts | Analytics API | Custom UI or Grafana |
 | **Top Lists** | Grouped aggregates | Analytics API | Grafana preferred |
-| **Active User Count** | Real-time counter | WebSocket (Events) | Custom UI only |
+| **Active User Count** | Real-time counter | Admin WebSocket | Custom UI only |
 | **Revenue Trends** | Time-series | Analytics API | Grafana preferred |
-| **Alert Notifications** | Real-time events | WebSocket (Events) | Custom UI only |
+| **Alert Notifications** | Real-time events | Admin WebSocket | Custom UI only |
 
 ---
 
@@ -185,27 +186,42 @@ Events → BigQuery (batch load)
 }
 ```
 
-### WebSocket Event Shapes
+### Admin WebSocket Event Shapes (ADR-002)
+
+Connection: `wss://api.turnkeyhms.com/ws/admin?token=<admin-jwt>`
 
 ```typescript
-// Real-time session update
+// Admin WebSocket authentication
 {
-  "type": "session.updated",
-  "data": {
-    "session_id": "sess_abc123",
-    "property_id": "prop_123",
-    "stage": "viewing_room",
-    "timestamp": "2025-01-14T10:00:00Z"
+  "type": "subscribe",
+  "payload": {
+    "clientType": "admin",
+    "propertyId": "prop_123",
+    "subscriptions": ["session.*", "event.*", "analytics.*"]
   }
 }
 
-// Real-time counter update
+// Real-time session update
 {
-  "type": "metrics.live",
-  "data": {
-    "active_sessions": 42,
-    "sessions_last_hour": 156,
-    "conversions_last_hour": 3
+  "type": "session.updated",
+  "payload": {
+    "session": {
+      "sessionId": "sess_abc123",
+      "propertyId": "prop_123",
+      "stage": "viewing_room",
+      "timestamp": "2025-01-14T10:00:00Z"
+    }
+  }
+}
+
+// Real-time analytics metrics
+{
+  "type": "analytics.metrics.updated",
+  "payload": {
+    "activeUsers": 42,
+    "totalSearches": 156,
+    "bookRate": 0.15,
+    "propertyId": "prop_123"
   }
 }
 ```
@@ -249,9 +265,11 @@ Events → BigQuery (batch load)
    const metrics = await fetch('/api/v1/analytics/metrics/overview');
    ```
 
-2. **Subscribe to events via Pub/Sub or WebSocket**
+2. **Subscribe to events via Admin WebSocket**
    ```javascript
-   // CORRECT - Event-driven updates
+   // CORRECT - Admin WebSocket with JWT
+   const token = await adminTokenService.getAdminToken();
+   const ws = new WebSocket(`wss://api.turnkeyhms.com/ws/admin?token=${token}`);
    ws.on('session.updated', (data) => updateUI(data));
    ```
 
@@ -264,14 +282,44 @@ Events → BigQuery (batch load)
 
 ---
 
+## 🔄 Admin WebSocket Migration (ADR-002)
+
+### Migration Status: ✅ COMPLETED (December 2024)
+
+The Admin Dashboard has successfully migrated from Events WebSocket to dedicated Admin WebSocket per ADR-002.
+
+### Architecture Change
+- **Before**: Admin Dashboard → Events WebSocket (coupled to Events service)
+- **After**: Admin Dashboard → Session Service JWT → Admin WebSocket (decoupled)
+
+### Key Benefits
+1. **Decoupling**: Admin features no longer depend on Events service
+2. **Security**: JWT-authenticated WebSocket connections
+3. **Scalability**: Dedicated admin channel prevents interference
+4. **Maintainability**: Clear service boundaries per ADR-002
+
+### Implementation Components
+- **Token Service**: `adminTokenService.ts` - JWT acquisition from Session service
+- **WebSocket Hook**: `useAdminWebSocket.ts` - Authenticated connection management
+- **Migration Hook**: `useAdminRealtimeWebSocket.ts` - Fallback orchestration
+- **Feature Flags**: `VITE_FEATURE_USE_ADMIN_WS` for controlled rollout
+
+### Deployment Strategy
+1. **Staging**: Feature flag enabled for validation
+2. **Production**: Gradual rollout with monitoring
+3. **Cleanup**: Events WS dependencies removed
+
+---
+
 ## 📋 Migration Checklist
 
-### Immediate Actions (Phase A)
-- [ ] Remove any direct BigQuery queries from Admin Dashboard
-- [ ] Remove any direct Firestore queries from Admin Dashboard
-- [ ] Create Analytics API endpoints for all current metrics
-- [ ] Update Admin UI to use Analytics API exclusively
-- [ ] Document all WebSocket event types
+### Immediate Actions (Phase A) - ✅ COMPLETED
+- [x] Remove any direct BigQuery queries from Admin Dashboard
+- [x] Remove any direct Firestore queries from Admin Dashboard
+- [x] Create Analytics API endpoints for all current metrics
+- [x] Update Admin UI to use Analytics API exclusively
+- [x] Implement Admin WebSocket with JWT authentication
+- [x] Document all Admin WebSocket event types
 
 ### Short-term (Phase B)
 - [ ] Set up Grafana for historical dashboards

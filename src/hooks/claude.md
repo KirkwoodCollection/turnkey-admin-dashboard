@@ -6,7 +6,8 @@ Reusable React hooks for common dashboard functionality.
 ## Hook Categories
 
 ### Data Hooks
-- `useRealtimeData`: WebSocket subscription wrapper
+- `useAdminWebSocket`: Admin WebSocket connection with JWT authentication (ADR-002)
+- `useAdminRealtimeWebSocket`: Unified real-time data with fallback orchestration
 - `useCachedQuery`: React Query wrapper with caching
 - `useFilteredData`: Apply time/dimension filters
 

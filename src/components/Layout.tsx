@@ -29,7 +29,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTimeFilter } from '../contexts/TimeFilterContext';
-import { useWebSocketContext } from '../contexts/WebSocketContext';
+import { useEvents } from '../contexts/EventsContext';
 import { useAuth } from '../hooks/useAuth';
 import { useHealthStatus, useHealthAlerts } from '../contexts/HealthContext';
 import { HEALTH_STATUS_COLORS, HEALTH_STATUS_LABELS } from '../types';
@@ -50,7 +50,7 @@ export const Layout: React.FC<LayoutProps> = ({
     availableFilters, 
     isLoading 
   } = useTimeFilter();
-  const { isConnected, reconnectCount } = useWebSocketContext();
+  const { isConnected, connectionError, connectionType } = useEvents();
   const { user, logout } = useAuth();
   
   // Health context hooks
@@ -98,11 +98,16 @@ export const Layout: React.FC<LayoutProps> = ({
 
   const getConnectionStatus = () => {
     if (isConnected) {
-      return { color: 'success' as const, text: 'Connected' };
-    } else if (reconnectCount > 0) {
-      return { color: 'warning' as const, text: 'Reconnecting...' };
+      const statusText = connectionType === 'admin' ? 'Admin WS' : 'Events WS';
+      return {
+        color: connectionType === 'admin' ? 'success' as const : 'warning' as const,
+        text: statusText
+      };
     } else {
-      return { color: 'error' as const, text: 'Disconnected' };
+      return {
+        color: 'error' as const,
+        text: connectionError ? 'Connection Error' : 'Disconnected'
+      };
     }
   };
 

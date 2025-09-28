@@ -4,6 +4,8 @@
 
 This document provides comprehensive integration instructions for the Admin Dashboard to consume Analytics service APIs. The Analytics service is the single source of truth for all metrics, KPIs, and business intelligence data.
 
+**⚠️ ADR-002 Update**: As of December 2024, real-time analytics data flows through the Admin WebSocket (`/ws/admin`) rather than direct Analytics WebSocket connections. This guide has been updated to reflect the new architecture.
+
 ## Service Architecture
 
 ```
@@ -306,34 +308,41 @@ const realtime = await fetch('/api/v1/metrics/realtime');
 
 ---
 
-## WebSocket Real-time Integration
+## Real-time Integration via Admin WebSocket (ADR-002)
 
-### WebSocket Connection
+### Admin WebSocket Connection
 
-**Development URL**: `ws://localhost:8001/ws`
-**Production URL**: `wss://analytics.turnkeyhms.com/ws` (when deployed)
+**Development URL**: `ws://localhost:8002/ws/admin?token=<admin-jwt>`
+**Production URL**: `wss://api.turnkeyhms.com/ws/admin?token=<admin-jwt>`
+
+**Note**: Admin Dashboard uses dedicated Admin WebSocket (not Analytics WebSocket) per ADR-002. Real-time analytics data flows through the Admin channel.
 
 ### Message Format
 
-All WebSocket messages follow this structure:
+All Admin WebSocket messages follow this structure:
 ```typescript
-interface AnalyticsWebSocketMessage {
+interface AdminWebSocketMessage {
   id: string;
   timestamp: string;
   type: string;
   payload: any;
+  source?: string; // Original service (analytics, events, etc.)
 }
 ```
 
 ### Subscription Pattern
 
-To receive updates for a specific property:
+To receive analytics updates via Admin WebSocket:
 ```typescript
-// Send subscription message
-ws.send(JSON.stringify({
-  type: 'analytics.subscribe',
-  payload: { propertyId: 'hotel_123' }
-}));
+// Admin WebSocket subscription (handled automatically by useAdminWebSocket)
+{
+  "type": "subscribe",
+  "payload": {
+    "clientType": "admin",
+    "propertyId": "hotel_123",
+    "subscriptions": ["analytics.*", "session.*", "event.*"]
+  }
+}
 ```
 
 ### Message Types
@@ -428,45 +437,38 @@ ws.send(JSON.stringify({
 ### Implementation Example
 
 ```typescript
-// React hook for Analytics WebSocket integration
-const useAnalyticsWebSocket = (propertyId?: string) => {
+// React hook for Admin WebSocket with Analytics data
+const useAnalyticsData = (propertyId?: string) => {
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const ws = new WebSocket('ws://localhost:8001/ws');
+    // Use the Admin WebSocket hook instead of direct connection
+    const { isConnected, subscribe } = useAdminWebSocket();
 
-    ws.onopen = () => {
-      setIsConnected(true);
-      setError(null);
-
-      // Subscribe to property updates
-      if (propertyId) {
-        ws.send(JSON.stringify({
-          type: 'analytics.subscribe',
-          payload: { propertyId }
-        }));
-      }
-    };
-
-    ws.onmessage = (event) => {
-      const message = JSON.parse(event.data);
+    // Subscribe to analytics events
+    const unsubscribe = subscribe('analytics.metrics.updated', (message) => {
       handleAnalyticsMessage(message);
-    };
+    });
 
-    ws.onerror = () => {
-      setError('WebSocket connection failed');
-    };
-
-    ws.onclose = () => {
-      setIsConnected(false);
-    };
-
-    return () => ws.close();
+    return unsubscribe;
   }, [propertyId]);
 
   return { isConnected, error };
 };
+
+// Usage in component
+const MyDashboard = ({ propertyId }) => {
+  const { isConnected } = useAnalyticsData(propertyId);
+
+  return (
+    <div>
+      <div>Connection: {isConnected ? 'Connected' : 'Disconnected'}</div>
+      {/* Dashboard components */}
+    </div>
+  );
+};
+
 ```
 
 ### Update Frequencies
@@ -478,10 +480,11 @@ const useAnalyticsWebSocket = (propertyId?: string) => {
 
 ### Error Handling
 
-WebSocket disconnections should trigger:
-1. Automatic reconnection with exponential backoff
-2. Fallback to REST API polling
+Admin WebSocket disconnections should trigger:
+1. Automatic token refresh and reconnection with exponential backoff
+2. Fallback to REST API polling for analytics data
 3. User notification of connection status
+4. Emergency fallback to Events WebSocket if configured
 
 ---
 

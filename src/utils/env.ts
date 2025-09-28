@@ -88,3 +88,19 @@ export const checkWebSocketServiceHealth = async (): Promise<boolean> => {
     return false;
   }
 };
+
+// Admin WebSocket configuration
+export const getAdminWebSocketUrl = (): string => {
+  const isDev = process.env.NODE_ENV === 'development';
+  return isDev ? 'ws://localhost:8002/ws/admin' : 'wss://api.turnkeyhms.com/ws/admin';
+};
+
+// Feature flag for using Admin WebSocket
+export const useAdminWebSocket = (): boolean => {
+  return getFeatureFlag('USE_ADMIN_WS', false);
+};
+
+// Emergency fallback flag
+export const useEventsWebSocketFallback = (): boolean => {
+  return getFeatureFlag('USE_EVENTS_WS_FALLBACK', false);
+};

@@ -14,8 +14,9 @@ Delivers the hotelier-facing UI/UX as a **pure presentation layer**. Composes vi
 
 ### What This Service CONSUMES
 - **Analytics API**: All KPIs, funnels, heatmaps, top lists, trends from `/api/v1/analytics/*`
-- **WebSocket feed**: Real-time session updates from Session/Events service
-- **Firebase Auth**: Token validation only (does not issue tokens)
+- **Admin WebSocket**: Real-time session updates via authenticated `/ws/admin` connection
+- **Session Service**: Admin JWT token acquisition for WebSocket authentication
+- **Firebase Auth**: Token validation for Session service authentication
 
 ### What This Service DOES NOT DO
 - **Database Access**: Never queries BigQuery, Firestore, or any database directly
@@ -35,13 +36,15 @@ Delivers the hotelier-facing UI/UX as a **pure presentation layer**. Composes vi
 
 ## Data Flow Architecture
 
-### Real-Time Flow
+### Real-Time Flow (ADR-002 Compliant)
 ```
-Session/Events Service
+Session Service (JWT Auth)
         ↓
-   WebSocket
+Admin Dashboard
         ↓
-Admin Dashboard → Display live sessions, counters
+Admin WebSocket (/ws/admin)
+        ↓
+Live sessions, events, alerts
 ```
 
 ### Analytics Flow
@@ -55,9 +58,10 @@ Admin Dashboard → Display KPIs, funnels, heatmaps
 
 ### Key Principles
 - **No Direct DB Access**: All data via APIs
-- **Event-Driven Updates**: WebSocket for real-time
+- **Admin WebSocket**: JWT-authenticated real-time connection per ADR-002
 - **Pre-Computed Metrics**: Analytics service owns all calculations
 - **Separation of Concerns**: UI displays, never computes
+- **Feature Flag Migration**: Gradual transition from Events WS to Admin WS
 
 ## API Endpoints
 
@@ -75,24 +79,44 @@ Admin Dashboard → Display KPIs, funnels, heatmaps
 - `POST /api/v1/admin/export` - Export functionality
 - `GET /api/v1/admin/features` - Feature flags
 
-### WebSocket Events Consumed
+### Session Service Integration
+- `POST /api/v1/auth/token` - Admin JWT acquisition for WebSocket authentication
+
+### Admin WebSocket Events (ADR-002)
+Connection: `wss://api.turnkeyhms.com/ws/admin?token=<admin-jwt>`
+
 ```typescript
-// Real-time session update
+// Admin WebSocket authentication
 {
-  "type": "session.updated",
-  "data": {
-    "session_id": "sess_abc123",
-    "stage": "viewing_room",
-    "timestamp": "2025-01-14T10:00:00Z"
+  "type": "subscribe",
+  "payload": {
+    "clientType": "admin",
+    "propertyId": "prop_123",
+    "subscriptions": ["session.*", "event.*", "analytics.*"]
   }
 }
 
-// Real-time counter update
+// Real-time session update
 {
-  "type": "metrics.live",
-  "data": {
-    "active_sessions": 42,
-    "sessions_last_hour": 156
+  "type": "session.updated",
+  "payload": {
+    "session": {
+      "sessionId": "sess_abc123",
+      "stage": "viewing_room",
+      "timestamp": "2025-01-14T10:00:00Z"
+    },
+    "propertyId": "prop_123"
+  }
+}
+
+// Real-time analytics metrics
+{
+  "type": "analytics.metrics.updated",
+  "payload": {
+    "activeUsers": 42,
+    "totalSearches": 156,
+    "bookRate": 0.15,
+    "propertyId": "prop_123"
   }
 }
 ```
@@ -102,26 +126,26 @@ Admin Dashboard → Display KPIs, funnels, heatmaps
 | UI Module | Data Source | Display Method | Why |
 |-----------|-------------|----------------|-----|
 | **KPI Tiles** | Analytics API | Custom UI or Grafana | Pre-computed metrics |
-| **Live Sessions** | WebSocket | Custom UI only | Real-time updates |
+| **Live Sessions** | Admin WebSocket | Custom UI only | Real-time updates |
 | **2D Heatmap** | Analytics API | Grafana preferred | Complex visualization |
 | **Funnel** | Analytics API | Custom UI or Grafana | Stage analysis |
 | **Top Lists** | Analytics API | Grafana preferred | Aggregated data |
-| **Active Users** | WebSocket | Custom UI only | Live counter |
+| **Active Users** | Admin WebSocket | Custom UI only | Live counter |
 | **Revenue Trends** | Analytics API | Grafana preferred | Time-series data |
-| **Alerts** | WebSocket | Custom UI only | Real-time notifications |
+| **Alerts** | Admin WebSocket | Custom UI only | Real-time notifications |
 
 ## RACI Matrix
 
 | Capability | Responsible | Accountable | Consulted | Informed |
 |------------|-------------|-------------|-----------|----------|
-| **UI/UX Delivery** | Admin Dashboard | Admin Dashboard | Analytics | Session/Events |
+| **UI/UX Delivery** | Admin Dashboard | Admin Dashboard | Analytics | Session |
 | **Metrics Computation** | Analytics | Analytics | - | Admin Dashboard |
-| **Session Management** | Session/Events | Session/Events | Analytics | Admin Dashboard |
-| **WebSocket Broadcast** | Session/Events | Session/Events | - | Admin Dashboard |
+| **Admin JWT Auth** | Session | Session | - | Admin Dashboard |
+| **Admin WebSocket** | Admin Dashboard | Admin Dashboard | Session | - |
 | **Historical Analytics** | Analytics | Analytics | - | Admin Dashboard |
-| **Real-time Display** | Admin Dashboard | Admin Dashboard | Session/Events | - |
+| **Real-time Display** | Admin Dashboard | Admin Dashboard | Session | - |
 | **User Preferences** | Admin Dashboard | Admin Dashboard | - | - |
-| **Event Processing** | Session/Events | Session/Events | Analytics | Admin Dashboard |
+| **Token Management** | Session | Session | - | Admin Dashboard |
 
 ## Anti-Patterns to Avoid
 
@@ -146,7 +170,9 @@ const metrics = await fetch('/api/v1/analytics/metrics/overview');
 // CORRECT - Display pre-computed metrics
 const { conversionRate } = await analyticsAPI.getMetrics();
 
-// CORRECT - Subscribe to WebSocket
+// CORRECT - Use Admin WebSocket with JWT
+const token = await adminTokenService.getAdminToken();
+const ws = new WebSocket(`wss://api.turnkeyhms.com/ws/admin?token=${token}`);
 ws.on('session.updated', (data) => updateUI(data));
 ```
 
@@ -163,10 +189,10 @@ ws.on('session.updated', (data) => updateUI(data));
 
 ### Technology Stack
 - React 18+ with TypeScript
-- WebSocket for real-time streaming
+- Admin WebSocket with JWT authentication
 - React Query for cache management
 - Module federation ready
-- Firebase Auth (validation only)
+- Firebase Auth + Session service integration
 - Optional Grafana embedding
 
 ### Performance Requirements
@@ -177,11 +203,12 @@ ws.on('session.updated', (data) => updateUI(data));
 
 ## Implementation Roadmap
 
-### Phase A - Lock Boundaries (Immediate)
-- Remove all direct database queries
-- Implement Analytics API consumption
-- Set up WebSocket subscriptions
-- Document consumed endpoints
+### ✅ Phase A - ADR-002 Compliance (COMPLETED)
+- ✅ Admin JWT token acquisition from Session service
+- ✅ Admin WebSocket connection with authentication
+- ✅ Feature flag controlled migration
+- ✅ Fallback mechanism for emergency rollback
+- ✅ Events WS dependency elimination
 
 ### Phase B - Grafana Integration (Next)
 - Embed Grafana for historical dashboards
@@ -199,9 +226,10 @@ ws.on('session.updated', (data) => updateUI(data));
 
 ### Security
 - No direct database access
-- Token validation only
+- JWT-authenticated WebSocket connections
+- Admin token acquisition via Session service
 - Sanitize all user inputs
-- Secure WebSocket connections
+- Secure WebSocket connections (wss://)
 
 ### Data Integrity
 - Single source of truth: Analytics service
@@ -213,8 +241,9 @@ ws.on('session.updated', (data) => updateUI(data));
 
 #### Consumes From
 - **Analytics Service**: All metrics via REST API
-- **Session/Events Service**: Real-time via WebSocket
-- **Auth Service**: Token validation
+- **Session Service**: Admin JWT tokens for WebSocket authentication
+- **Admin WebSocket**: Real-time session and analytics events
+- **Firebase Auth**: User authentication for Session service
 
 #### Provides To
 - **End Users**: Hotelier dashboard UI
@@ -224,20 +253,21 @@ ws.on('session.updated', (data) => updateUI(data));
 
 | Data Type | Owner Service | Admin Dashboard Role |
 |-----------|--------------|---------------------|
-| Session State | Session/Events | Display only via WebSocket |
+| Session State | Session/Events | Display only via Admin WebSocket |
 | Raw Events | Session/Events | No access |
 | Computed Metrics | Analytics | Display via API |
 | Funnel Calculations | Analytics | Display via API |
 | Heatmap Aggregations | Analytics | Display via API/Grafana |
 | Historical Analytics | Analytics | Display via API/Grafana |
-| WebSocket Broadcasts | Session/Events | Subscribe and display |
+| Admin JWT Tokens | Session | Acquire and manage for auth |
+| Admin WebSocket | **Admin Dashboard** | Full connection ownership |
 | UI State | **Admin Dashboard** | Full ownership |
 | User Preferences | **Admin Dashboard** | Full ownership |
 
 ## Module Decision Framework
 
 ### Use Custom UI When:
-- Real-time data via WebSocket (live tables, instant counters)
+- Real-time data via Admin WebSocket (live tables, instant counters)
 - Tight coupling to admin actions required
 - Sub-second update requirements
 - Unique interaction patterns
@@ -271,14 +301,16 @@ ws.on('session.updated', (data) => updateUI(data));
 
 ### Metrics to Track
 - API response times
-- WebSocket connection stability
+- Admin WebSocket connection stability
+- Admin JWT token acquisition times
 - Component render performance
 - Cache hit rates
 
 ### Logging
 - User actions
 - API errors
-- WebSocket disconnections
+- Admin WebSocket disconnections
+- JWT token acquisition failures
 - Performance bottlenecks
 
 ## Future Enhancements
@@ -294,6 +326,40 @@ ws.on('session.updated', (data) => updateUI(data));
 - Progressive Web App capabilities
 - Offline mode with sync
 - Advanced state management
+
+## Admin WebSocket Migration (ADR-002)
+
+### Migration Completed ✅
+As of December 2024, the Admin Dashboard has successfully migrated from Events WebSocket to dedicated Admin WebSocket per ADR-002.
+
+### Architecture Changes
+- **Before**: Events WS → Admin Dashboard (coupled to Events service)
+- **After**: Session Service JWT → Admin WebSocket → Admin Dashboard (decoupled)
+
+### Implementation Details
+- **Token Service**: `adminTokenService.ts` handles JWT acquisition from Session service
+- **WebSocket Hook**: `useAdminWebSocket.ts` manages authenticated connections
+- **Fallback Hook**: `useAdminRealtimeWebSocket.ts` orchestrates migration with fallback
+- **Feature Flags**: Controlled rollout via `VITE_FEATURE_USE_ADMIN_WS`
+
+### Deployment Strategy
+1. **Staging**: Enable `VITE_FEATURE_USE_ADMIN_WS=true`
+2. **Verification**: All admin real-time features working
+3. **Production**: Feature flag enabled after validation
+4. **Cleanup**: Remove Events WS dependencies
+
+### Connection Flow
+```mermaid
+sequenceDiagram
+    participant AD as Admin Dashboard
+    participant SS as Session Service
+    participant AWS as Admin WebSocket
+
+    AD->>SS: POST /api/v1/auth/token (Firebase token)
+    SS->>AD: { "token": "admin-jwt" }
+    AD->>AWS: Connect wss://api.../ws/admin?token=jwt
+    AWS->>AD: Real-time admin events
+```
 
 ## Integration Guides
 

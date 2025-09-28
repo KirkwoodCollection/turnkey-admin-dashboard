@@ -5,9 +5,10 @@ Business logic abstraction and external system integration layer.
 
 ## Service Organization
 - `api/`: RESTful endpoint management
-- `websocket/`: Real-time connection handling
-- `cache/`: Intelligent caching strategies
+- `websocket/`: Real-time connection handling (legacy)
 - `auth/`: Authentication and authorization
+  - `adminTokenService.ts`: Admin JWT token acquisition from Session service (ADR-002)
+- `cache/`: Intelligent caching strategies
 
 ## Design Principles
 1. **Single Responsibility**: Each service has one clear purpose

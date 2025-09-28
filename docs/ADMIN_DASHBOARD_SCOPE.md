@@ -12,13 +12,13 @@ The Admin Dashboard microservice delivers the **hotelier-facing UI/UX**, composi
 - **UI and UX**: React app/micro-frontend including layout, theming, routing, user preferences
 - **View Composition**: Combines pre-computed metrics from Analytics API with live session data
 - **Thin Admin API Layer**: UI-specific concerns only (exports, preferences, feature flags)
-- **WebSocket Subscription Client**: Receives real-time session changes to update "now" counters and live lists
+- **Admin WebSocket Subscription Client**: Receives real-time session changes via JWT-authenticated connection to update "now" counters and live lists
 - **Admin-Only Interface**: Authenticated access for hotel operators and system administrators
 - **Presentation Logic**: Rendering charts, tables, and dashboards (no computation)
 
 ### Technical Scope (CONSUMES)
 - **Analytics API**: For all KPIs, funnels, heatmaps, top lists, trend series (pre-computed)
-- **WebSocket Feed**: From Session/Events service for live activity display
+- **Admin WebSocket**: JWT-authenticated real-time connection for live activity display (ADR-002)
 - **Firebase Auth**: Token validation only (does not issue tokens)
 - **React Query Cache**: For API response caching (does not compute data)
 - **Optional Grafana Embed**: For historical/analytical visualizations
@@ -52,7 +52,7 @@ The Admin Dashboard microservice delivers the **hotelier-facing UI/UX**, composi
 ┌─────────────────────────────────────────────────────┐
 │  • Analytics API  (GET /api/v1/analytics/*)         │
 │  • Admin API      (GET /api/v1/admin/*) - thin layer│
-│  • WebSocket Gateway (wss://api.turnkeyhms.com/ws)  │
+│  • Admin WebSocket   (wss://api.turnkeyhms.com/ws/admin) │
 │  • Firebase Auth  (Token validation only)           │
 └─────────────────────────────────────────────────────┘
 ```
@@ -84,9 +84,9 @@ The Admin Dashboard microservice delivers the **hotelier-facing UI/UX**, composi
 
 #### Real-time Data (< 1 minute old)
 ```
-WebSocket Gateway ──event──> Admin Dashboard ──display──> UI Component
-                                    │
-                                    └──cache──> React Query Store
+Admin WebSocket ──JWT auth──> Admin Dashboard ──display──> UI Component
+  (Session JWT)                           │
+                                          └──cache──> React Query Store
 ```
 
 #### Recent Data (1 minute - 24 hours)
@@ -129,15 +129,13 @@ UI Request ──> React Query ──> Analytics API ──> BigQuery ──> Re
 - `GET /metrics/trends` - Time-series data for charts
 - All endpoints return **shaped JSON ready for visualization**
 
-#### WebSocket Events We Subscribe To
+#### Admin WebSocket Events We Subscribe To (ADR-002)
 ```javascript
-// Event subscriptions
-ws.subscribe('booking.created')
-ws.subscribe('booking.modified')
-ws.subscribe('booking.cancelled')
-ws.subscribe('property.status.changed')
-ws.subscribe('system.alert')
-ws.subscribe('analytics.updated')
+// Admin WebSocket subscriptions via JWT authentication
+adminWS.subscribe('session.updated')
+adminWS.subscribe('analytics.metrics.updated')
+adminWS.subscribe('event.received')
+adminWS.subscribe('analytics.funnel.updated')
 ```
 
 ---
@@ -150,7 +148,7 @@ Frontend:
   - Framework: React 18.2+
   - Language: TypeScript 5.0+ (strict mode)
   - State Management: React Query v4
-  - WebSocket: native WebSocket API
+  - WebSocket: Admin WebSocket with JWT authentication
   - Styling: Tailwind CSS / CSS Modules
   - Charts: Recharts / D3.js
   - Testing: Jest + React Testing Library
@@ -177,7 +175,7 @@ src/
 │   └── utils/         # Helper functions
 └── core/              # Core infrastructure
     ├── auth/          # Auth integration
-    ├── websocket/     # WebSocket management
+    ├── websocket/     # Admin WebSocket management
     └── cache/         # Cache configuration
 ```
 
@@ -186,7 +184,7 @@ src/
 ## ⚡ Performance Requirements
 
 ### Latency Targets
-- **WebSocket Events**: < 100ms from event to UI update
+- **Admin WebSocket Events**: < 100ms from event to UI update
 - **API Responses**: < 500ms for operational data
 - **Analytics Queries**: < 2s for complex reports
 - **Initial Load**: < 3s for dashboard shell
@@ -194,7 +192,7 @@ src/
 
 ### Scalability Targets
 - **Concurrent Users**: 100+ administrators
-- **WebSocket Connections**: 500+ simultaneous
+- **Admin WebSocket Connections**: 500+ simultaneous
 - **Cache Hit Rate**: > 80% for repeated queries
 - **Update Frequency**: 1Hz for real-time metrics
 
@@ -234,7 +232,7 @@ User ──> Firebase Auth ──> Token ──> Admin Dashboard
 4. **Auth Management**: Don't implement auth, only validate existing tokens
 5. **Data Computation**: Don't calculate analytics, request pre-computed results
 6. **Cross-Service Calls**: Don't call peer services directly, use gateway routes
-7. **Synchronous Polling**: Use WebSocket subscriptions, not polling loops
+7. **Synchronous Polling**: Use Admin WebSocket subscriptions, not polling loops
 8. **Global State**: Keep state modular per feature, avoid global stores
 
 ### ✅ ALWAYS DO THIS
@@ -253,7 +251,7 @@ User ──> Firebase Auth ──> Token ──> Admin Dashboard
 
 ### Phase 1: Foundation
 - [ ] React app scaffold with TypeScript
-- [ ] WebSocket connection manager
+- [ ] Admin WebSocket connection manager with JWT authentication
 - [ ] React Query configuration
 - [ ] Firebase Auth integration
 - [ ] Error boundary implementation
@@ -285,7 +283,7 @@ User ──> Firebase Auth ──> Token ──> Admin Dashboard
 
 - [CLAUDE.md](./CLAUDE.md) - Architecture guidelines and principles
 - [Admin API Spec](https://api.turnkeyhms.com/docs/admin) - API documentation
-- [WebSocket Events](https://api.turnkeyhms.com/docs/events) - Event catalog
+- [Admin WebSocket Events](https://api.turnkeyhms.com/docs/admin-ws) - Admin event catalog
 - [Firebase Auth Guide](https://firebase.google.com/docs/auth) - Authentication reference
 
 ---
@@ -298,8 +296,8 @@ User ──> Firebase Auth ──> Token ──> Admin Dashboard
 | **Top Destinations/Hotels** | Analytics (grouped metrics) | Analytics API | Admin UI or Grafana |
 | **2D Heatmap** | Analytics (server-computed) | Analytics API | Admin UI or Grafana |
 | **Funnel Stats** | Analytics (stage counts) | Analytics API | Admin UI or Grafana |
-| **Live Session List** | Session/Events + WebSocket | Session service | Admin UI (custom) |
-| **Real-time Counters** | WebSocket events | Session service | Admin UI (custom) |
+| **Live Session List** | Admin WebSocket | Admin WebSocket | Admin UI (custom) |
+| **Real-time Counters** | Admin WebSocket events | Admin WebSocket | Admin UI (custom) |
 
 ---
 
@@ -313,7 +311,7 @@ User ──> Firebase Auth ──> Token ──> Admin Dashboard
 - Examples: 2D heatmap, top lists, long-range trends, funnels
 
 ### Use Custom Admin UI When:
-- Real-time data via WebSocket (live tables, instant counters)
+- Real-time data via Admin WebSocket (live tables, instant counters)
 - Requires tight coupling to admin actions
 - Unique interaction patterns needed
 - Must match brand/UX exactly
@@ -326,11 +324,12 @@ User ──> Firebase Auth ──> Token ──> Admin Dashboard
 
 | Capability | Responsible | Accountable | Consulted | Informed |
 |------------|------------|-------------|-----------|----------|
-| **Session lifecycle & WebSocket broadcast** | Session/Events | Session/Events | Analytics | Admin |
+| **Session lifecycle & event processing** | Session/Events | Session/Events | Analytics | Admin |
 | **Event → BigQuery pipeline** | Session/Events | Session/Events | Analytics | Admin |
+| **Admin WebSocket with JWT authentication** | Admin Dashboard | Admin Dashboard | Session | - |
 | **Metrics computation (KPI/funnel/heatmap)** | Analytics | Analytics | Session/Events | Admin |
 | **Historical dashboard visuals** | Grafana | Admin | Analytics | Session/Events |
-| **Real-time visuals (live sessions)** | Admin UI | Admin | Session/Events | Analytics |
+| **Real-time visuals (live sessions)** | Admin UI | Admin | Admin WebSocket | Analytics |
 | **UI/UX design & implementation** | Admin Dashboard | Admin | - | Analytics |
 | **Admin-specific operations** | Admin Dashboard | Admin | - | - |
 
@@ -339,7 +338,7 @@ User ──> Firebase Auth ──> Token ──> Admin Dashboard
 ## 🚀 Implementation Phases
 
 ### Phase A - Lock Boundaries (Week 1)
-- [ ] Freeze DB ownership: Only Session/Events writes to Firestore
+- [x] Freeze DB ownership: Only Session/Events writes to Firestore
 - [ ] Analytics reads via Pub/Sub (RT) and BigQuery (historical)
 - [ ] Admin UI never queries databases directly
 - [ ] Stand up Analytics API endpoints: `/metrics/overview`, `/metrics/funnel`, `/metrics/heatmap`
@@ -349,7 +348,7 @@ User ──> Firebase Auth ──> Token ──> Admin Dashboard
 - [ ] Embed Grafana under `/admin/analytics/*` route
 - [ ] Configure SSO with Admin UI authentication
 - [ ] Point Grafana at BigQuery views for historical panels
-- [ ] Keep live session table in custom Admin UI via WebSocket
+- [x] Keep live session table in custom Admin UI via Admin WebSocket (ADR-002)
 - [ ] Ensure metrics match between Grafana and custom UI
 
 ### Phase C - Harden & Scale (Week 3+)
@@ -383,7 +382,7 @@ User ──> Firebase Auth ──> Token ──> Admin Dashboard
 - **Uptime**: 99.9% availability
 - **Error Rate**: < 0.1% of requests
 - **Cache Hit Rate**: > 80%
-- **WebSocket Stability**: < 1% connection drops
+- **Admin WebSocket Stability**: < 1% connection drops
 
 ### User Experience
 - **Time to First Byte**: < 200ms
